@@ -1,12 +1,1 @@
 @import "tailwindcss";
-
-.clip-shield {
-  clip-path: polygon(
-    50% 0%,
-    90% 15%,
-    85% 65%,
-    50% 100%,
-    15% 65%,
-    10% 15%
-  );
-}
