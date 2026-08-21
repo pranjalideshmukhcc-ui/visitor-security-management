@@ -1,20 +1,36 @@
 import { useState } from "react";
+import axios from "axios";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setMessage(
-      "Login form is working. Authentication will be connected to the backend soon."
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      {
+        email: email,
+        password: password,
+      }
     );
 
-    console.log("Login submitted");
-    console.log("Remember me:", rememberMe);
-  };
+    console.log("Login response:", response.data);
+
+    setMessage("Login successful!");
+  } catch (error) {
+    console.error("Login error:", error);
+
+    setMessage(
+      error.response?.data?.message || "Login failed. Please try again."
+    );
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0E7FF] flex items-center justify-center px-4 py-10">
@@ -84,6 +100,8 @@ function Login() {
               id="email"
               type="email"
               placeholder="admin@securegate.com"
+              valie={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full h-11 px-4 border border-indigo-100 rounded-lg
               bg-indigo-50/30 text-slate-700
@@ -119,6 +137,8 @@ function Login() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full h-11 px-4 pr-12
                 border border-indigo-100 rounded-lg
