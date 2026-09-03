@@ -45,4 +45,66 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get visitor by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const visitor = await Visitor.findById(req.params.id);
+
+    if (!visitor) {
+      return res.status(404).json({
+        success: false,
+        message: "Visitor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: visitor,
+    });
+  } catch (error) {
+    console.error("Get Visitor By ID Error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch visitor",
+      error: error.message,
+    });
+  }
+});
+
+// Update visitor
+router.put("/:id", async (req, res) => {
+  try {
+    const visitor = await Visitor.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!visitor) {
+      return res.status(404).json({
+        success: false,
+        message: "Visitor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Visitor updated successfully",
+      data: visitor,
+    });
+  } catch (error) {
+    console.error("Update Visitor Error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update visitor",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;
