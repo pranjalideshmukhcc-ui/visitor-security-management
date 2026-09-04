@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const visitorRoutes = require("./routes/visitorRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const hostRoutes = require("./routes/hostRoutes");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/visitors", visitorRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/hosts", hostRoutes);
 
 // Test route
 app.get("/", (req, res) => {
