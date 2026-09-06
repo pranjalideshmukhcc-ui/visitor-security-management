@@ -4,6 +4,8 @@ require("dotenv").config();
 
 const connectDB = require("./config/db");
 
+const logRoutes = require("./routes/logRoutes");
+
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -19,6 +21,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Visitor & Security Management API is running!");
 });
+
+// API routes
+app.use("/api/logs", logRoutes);
 
 // Start server
 app.listen(PORT, () => {
