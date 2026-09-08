@@ -5,6 +5,9 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const visitorRoutes = require("./routes/visitorRoutes");
+const approvalRoutes = require("./routes/approvalRoutes");
+const logRoutes = require("./routes/logRoutes");
+
 
 const app = express();
 
@@ -22,6 +25,12 @@ app.use("/api/dashboard", dashboardRoutes);
 
 //Visitor routes
 app.use("/api/visitors", visitorRoutes);
+
+//approval routes
+app.use("/api/approvals", approvalRoutes);
+
+//log routes
+app.use("/api/logs", logRoutes);
 
 // Test route
 app.get("/", (req, res) => {
