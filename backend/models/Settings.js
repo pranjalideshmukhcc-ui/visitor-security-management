@@ -24,6 +24,11 @@ const settingsSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    autoCheckout: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

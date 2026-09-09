@@ -30,6 +30,7 @@ router.put("/", async (req, res) => {
       visitorPassValidity,
       notifications,
       autoApproval,
+      autoCheckout,
     } = req.body;
 
     let settings = await Settings.findOne();
@@ -53,6 +54,10 @@ router.put("/", async (req, res) => {
 
     if (autoApproval !== undefined) {
       settings.autoApproval = autoApproval;
+    }
+
+    if (autoCheckout !== undefined) {
+      settings.autoCheckout = autoCheckout;
     }
 
     const updatedSettings = await settings.save();
