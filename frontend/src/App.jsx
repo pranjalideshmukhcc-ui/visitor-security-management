@@ -3,43 +3,64 @@ import { useEffect, useState } from "react";
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
 
-  const [visitors, setVisitors] = useState([
-    {
-      name: "John Doe",
-      purpose: "Client Meeting",
-      host: "Sarah Connor (Eng)",
-      time: "09:15 AM",
-      status: "Active",
-    },
-    {
-      name: "Jane Smith",
-      purpose: "Interview",
-      host: "Markus Aurelius (HR)",
-      time: "09:40 AM",
-      status: "Active",
-    },
-    {
-      name: "Robert Patterson",
-      purpose: "HVAC Repair",
-      host: "Facility Manager",
-      time: "10:05 AM",
-      status: "Pending",
-    },
-    {
-      name: "Emily Blunt",
-      purpose: "Vendor Delivery",
-      host: "Reception",
-      time: "10:20 AM",
-      status: "Checked Out",
-    },
-    {
-      name: "Michael Jordan",
-      purpose: "Board Meeting",
-      host: "Executive Office",
-      time: "10:30 AM",
-      status: "Active",
-    },
-  ]);
+  // Visitors are loaded from backend
+  const [visitors, setVisitors] = useState([]);
+
+  // Load visitors from backend
+  useEffect(() => {
+    const fetchVisitors = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/visitors"
+        );
+
+        const data = await response.json();
+
+        console.log("APP VISITORS FROM BACKEND:", data);
+
+        if (!response.ok) {
+          console.error("Failed to fetch visitors:", data);
+          return;
+        }
+
+        const formattedVisitors = data
+          .filter((visitor) => visitor.visitorName)
+          .map((visitor) => ({
+            id: visitor._id,
+            name: visitor.visitorName,
+            purpose: visitor.purpose || "",
+            host: visitor.host || "",
+            time: visitor.visitDateTime
+              ? new Date(
+                  visitor.visitDateTime
+                ).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "",
+            status:
+              visitor.status === "Checked-in"
+                ? "Active"
+                : visitor.status === "Checked-out"
+                ? "Checked Out"
+                : visitor.status === "Approved"
+                ? "Active"
+                : visitor.status === "Rejected"
+                ? "Rejected"
+                : "Pending",
+          }));
+
+        setVisitors(formattedVisitors);
+      } catch (error) {
+        console.error(
+          "Failed to fetch visitors:",
+          error
+        );
+      }
+    };
+
+    fetchVisitors();
+  }, []);
 
   const [search, setSearch] = useState("");
 
@@ -74,6 +95,7 @@ function App() {
 
     link.href = url;
     link.download = "visitor-report.csv";
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -85,7 +107,10 @@ function App() {
     setVisitors((current) =>
       current.map((visitor, i) =>
         i === index
-          ? { ...visitor, status: "Checked Out" }
+          ? {
+              ...visitor,
+              status: "Checked Out",
+            }
           : visitor
       )
     );
@@ -152,7 +177,9 @@ function App() {
           </p>
 
           <button
-            onClick={() => goTo("Pre-Registration")}
+            onClick={() =>
+              goTo("Pre-Registration")
+            }
             style={{
               ...styles.navButton,
               ...(activePage === "Pre-Registration"
@@ -160,7 +187,10 @@ function App() {
                 : {}),
             }}
           >
-            <span style={styles.navIcon}>⊕</span>
+            <span style={styles.navIcon}>
+              ⊕
+            </span>
+
             New Pre-Registration
           </button>
 
@@ -170,7 +200,10 @@ function App() {
             }
             style={styles.navButton}
           >
-            <span style={styles.navIcon}>♙</span>
+            <span style={styles.navIcon}>
+              ♙
+            </span>
+
             Issue Temp Pass
           </button>
 
@@ -181,12 +214,15 @@ function App() {
 
       <div style={styles.mainArea}>
 
-        {/* NAVBAR */}
+        {/* ================= NAVBAR ================= */}
 
         <header style={styles.navbar}>
 
           <div style={styles.searchBox}>
-            <span style={styles.searchIcon}>⌕</span>
+
+            <span style={styles.searchIcon}>
+              ⌕
+            </span>
 
             <input
               value={search}
@@ -196,6 +232,7 @@ function App() {
               placeholder="Search visitors, hosts, logs..."
               style={styles.searchInput}
             />
+
           </div>
 
           <div style={styles.userArea}>
@@ -214,6 +251,7 @@ function App() {
             </div>
 
             <div>
+
               <div style={styles.adminName}>
                 Admin User
               </div>
@@ -221,6 +259,7 @@ function App() {
               <div style={styles.adminRole}>
                 Command Center
               </div>
+
             </div>
 
           </div>
@@ -239,6 +278,7 @@ function App() {
               <div style={styles.pageHeader}>
 
                 <div>
+
                   <h1 style={styles.heading}>
                     Dashboard Overview
                   </h1>
@@ -247,6 +287,7 @@ function App() {
                     Real-time monitoring of campus
                     visitors and security logs.
                   </p>
+
                 </div>
 
                 <button
@@ -264,28 +305,43 @@ function App() {
 
                 <StatCard
                   title="Total Visitors Today"
-                  value="148"
-                  description="+12% from yesterday"
+                  value={visitors.length}
+                  description="Visitors loaded from database"
                   icon="♙"
                 />
 
                 <StatCard
                   title="Checked In"
-                  value="84"
+                  value={
+                    visitors.filter(
+                      (v) =>
+                        v.status === "Active"
+                    ).length
+                  }
                   description="Currently on-site"
                   icon="⇥"
                 />
 
                 <StatCard
                   title="Checked Out"
-                  value="52"
+                  value={
+                    visitors.filter(
+                      (v) =>
+                        v.status === "Checked Out"
+                    ).length
+                  }
                   description="Completed visits"
                   icon="⇥"
                 />
 
                 <StatCard
                   title="Pending Approvals"
-                  value="12"
+                  value={
+                    visitors.filter(
+                      (v) =>
+                        v.status === "Pending"
+                    ).length
+                  }
                   description="Awaiting host confirmation"
                   icon="◷"
                 />
@@ -297,6 +353,7 @@ function App() {
                 <div style={styles.tableHeader}>
 
                   <div>
+
                     <h2 style={styles.tableTitle}>
                       Recent Visitors Log
                     </h2>
@@ -305,13 +362,16 @@ function App() {
                       Live feed of entries and exits
                       in past 12 hours
                     </p>
+
                   </div>
 
                   <div style={styles.tableActions}>
 
                     <button
                       onClick={() =>
-                        alert("Filter options opened.")
+                        alert(
+                          "Filter options opened."
+                        )
                       }
                       style={styles.smallButton}
                     >
@@ -338,6 +398,7 @@ function App() {
                   <table style={styles.table}>
 
                     <thead>
+
                       <tr>
 
                         <th style={styles.th}>
@@ -365,13 +426,20 @@ function App() {
                         </th>
 
                       </tr>
+
                     </thead>
 
                     <tbody>
 
                       {filteredVisitors.map(
                         (visitor, index) => (
-                          <tr key={index}>
+
+                          <tr
+                            key={
+                              visitor.id ||
+                              index
+                            }
+                          >
 
                             <td style={styles.td}>
 
@@ -410,11 +478,13 @@ function App() {
                             </td>
 
                             <td style={styles.td}>
+
                               <StatusBadge
                                 status={
                                   visitor.status
                                 }
                               />
+
                             </td>
 
                             <td style={styles.td}>
@@ -434,6 +504,7 @@ function App() {
 
                               {visitor.status !==
                                 "Checked Out" && (
+
                                 <button
                                   onClick={() =>
                                     checkOut(index)
@@ -444,11 +515,13 @@ function App() {
                                 >
                                   Check Out
                                 </button>
+
                               )}
 
                             </td>
 
                           </tr>
+
                         )
                       )}
 
@@ -499,8 +572,11 @@ function App() {
 
           {activePage === "Pre-Registration" && (
             <PreRegistrationPage
-              onBack={() => goTo("Dashboard")}
+              onBack={() =>
+                goTo("Dashboard")
+              }
               onSubmit={(newVisitor) => {
+
                 setVisitors((current) => [
                   ...current,
                   newVisitor,
@@ -511,6 +587,7 @@ function App() {
                 );
 
                 goTo("Visitors");
+
               }}
             />
           )}
@@ -539,6 +616,7 @@ function VisitorsPage({
       <div style={styles.pageHeader}>
 
         <div>
+
           <h1 style={styles.heading}>
             Visitors
           </h1>
@@ -546,6 +624,7 @@ function VisitorsPage({
           <p style={styles.subtitle}>
             Manage registered visitors and their visits.
           </p>
+
         </div>
 
         <button
@@ -592,7 +671,8 @@ function VisitorsPage({
           title="Checked Out"
           value={
             visitors.filter(
-              (v) => v.status === "Checked Out"
+              (v) =>
+                v.status === "Checked Out"
             ).length
           }
           description="Completed visits"
@@ -606,6 +686,7 @@ function VisitorsPage({
         <div style={styles.tableHeader}>
 
           <div>
+
             <h2 style={styles.tableTitle}>
               Visitor Records
             </h2>
@@ -613,6 +694,7 @@ function VisitorsPage({
             <p style={styles.tableSubtitle}>
               All registered visitors
             </p>
+
           </div>
 
         </div>
@@ -626,6 +708,7 @@ function VisitorsPage({
           <table style={styles.table}>
 
             <thead>
+
               <tr>
 
                 <th style={styles.th}>
@@ -653,13 +736,20 @@ function VisitorsPage({
                 </th>
 
               </tr>
+
             </thead>
 
             <tbody>
 
               {visitors.map(
                 (visitor, index) => (
-                  <tr key={index}>
+
+                  <tr
+                    key={
+                      visitor.id ||
+                      index
+                    }
+                  >
 
                     <td style={styles.td}>
 
@@ -698,17 +788,20 @@ function VisitorsPage({
                     </td>
 
                     <td style={styles.td}>
+
                       <StatusBadge
                         status={
                           visitor.status
                         }
                       />
+
                     </td>
 
                     <td style={styles.td}>
 
                       {visitor.status !==
                         "Checked Out" && (
+
                         <button
                           onClick={() =>
                             onCheckOut(index)
@@ -719,11 +812,13 @@ function VisitorsPage({
                         >
                           Check Out
                         </button>
+
                       )}
 
                     </td>
 
                   </tr>
+
                 )
               )}
 
@@ -745,8 +840,12 @@ function VisitorsPage({
 ===================================================== */
 
 function SecurityLogsPage() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("All");
 
   const logs = [
     {
@@ -792,21 +891,27 @@ function SecurityLogsPage() {
   ];
 
   const filteredLogs = logs.filter((log) => {
+
     const text =
       `${log.user} ${log.action} ${log.visitor} ${log.location}`.toLowerCase();
 
-    const matchesSearch = text.includes(
-      search.toLowerCase()
-    );
+    const matchesSearch =
+      text.includes(
+        search.toLowerCase()
+      );
 
     const matchesFilter =
       filter === "All" ||
       log.status === filter;
 
-    return matchesSearch && matchesFilter;
+    return (
+      matchesSearch &&
+      matchesFilter
+    );
   });
 
   const exportLogs = () => {
+
     const csv =
       "Time,User,Action,Visitor,Location,Status\n" +
       filteredLogs
@@ -828,6 +933,7 @@ function SecurityLogsPage() {
       <div style={styles.pageHeader}>
 
         <div>
+
           <h1 style={styles.heading}>
             Security Logs
           </h1>
@@ -835,6 +941,7 @@ function SecurityLogsPage() {
           <p style={styles.subtitle}>
             Monitor security events and system activity.
           </p>
+
         </div>
 
         <button
@@ -859,7 +966,8 @@ function SecurityLogsPage() {
           title="Successful"
           value={
             logs.filter(
-              (l) => l.status === "Success"
+              (l) =>
+                l.status === "Success"
             ).length
           }
           description="Normal activity"
@@ -870,7 +978,8 @@ function SecurityLogsPage() {
           title="Warnings"
           value={
             logs.filter(
-              (l) => l.status === "Warning"
+              (l) =>
+                l.status === "Warning"
             ).length
           }
           description="Requires attention"
@@ -891,6 +1000,7 @@ function SecurityLogsPage() {
         <div style={styles.tableHeader}>
 
           <div>
+
             <h2 style={styles.tableTitle}>
               Activity Log
             </h2>
@@ -898,6 +1008,7 @@ function SecurityLogsPage() {
             <p style={styles.tableSubtitle}>
               Latest security events
             </p>
+
           </div>
 
           <div style={styles.tableActions}>
@@ -918,6 +1029,7 @@ function SecurityLogsPage() {
               }
               style={styles.smallSelect}
             >
+
               <option value="All">
                 All Events
               </option>
@@ -929,6 +1041,7 @@ function SecurityLogsPage() {
               <option value="Warning">
                 Warnings
               </option>
+
             </select>
 
           </div>
@@ -944,6 +1057,7 @@ function SecurityLogsPage() {
           <table style={styles.table}>
 
             <thead>
+
               <tr>
 
                 <th style={styles.th}>
@@ -971,12 +1085,14 @@ function SecurityLogsPage() {
                 </th>
 
               </tr>
+
             </thead>
 
             <tbody>
 
               {filteredLogs.map(
                 (log, index) => (
+
                   <tr key={index}>
 
                     <td style={styles.td}>
@@ -1000,12 +1116,17 @@ function SecurityLogsPage() {
                     </td>
 
                     <td style={styles.td}>
+
                       <StatusBadge
-                        status={log.status}
+                        status={
+                          log.status
+                        }
                       />
+
                     </td>
 
                   </tr>
+
                 )
               )}
 
@@ -1027,6 +1148,7 @@ function SecurityLogsPage() {
 ===================================================== */
 
 function ReportsPage({ visitors }) {
+
   const [reportType, setReportType] =
     useState("Visitor Activity");
 
@@ -1034,6 +1156,7 @@ function ReportsPage({ visitors }) {
     useState("Today");
 
   const exportReport = () => {
+
     const csv =
       "Visitor Name,Host,Purpose,Time,Status\n" +
       visitors
@@ -1049,17 +1172,22 @@ function ReportsPage({ visitors }) {
     );
   };
 
-  const checkedIn = visitors.filter(
-    (v) => v.status === "Active"
-  ).length;
+  const checkedIn =
+    visitors.filter(
+      (v) => v.status === "Active"
+    ).length;
 
-  const checkedOut = visitors.filter(
-    (v) => v.status === "Checked Out"
-  ).length;
+  const checkedOut =
+    visitors.filter(
+      (v) =>
+        v.status === "Checked Out"
+    ).length;
 
-  const pending = visitors.filter(
-    (v) => v.status === "Pending"
-  ).length;
+  const pending =
+    visitors.filter(
+      (v) =>
+        v.status === "Pending"
+    ).length;
 
   return (
     <div>
@@ -1067,6 +1195,7 @@ function ReportsPage({ visitors }) {
       <div style={styles.pageHeader}>
 
         <div>
+
           <h1 style={styles.heading}>
             Reports
           </h1>
@@ -1074,6 +1203,7 @@ function ReportsPage({ visitors }) {
           <p style={styles.subtitle}>
             Generate and export visitor activity reports.
           </p>
+
         </div>
 
         <button
@@ -1106,10 +1236,13 @@ function ReportsPage({ visitors }) {
             <select
               value={reportType}
               onChange={(e) =>
-                setReportType(e.target.value)
+                setReportType(
+                  e.target.value
+                )
               }
               style={styles.input}
             >
+
               <option>
                 Visitor Activity
               </option>
@@ -1125,6 +1258,7 @@ function ReportsPage({ visitors }) {
               <option>
                 Pending Visitors
               </option>
+
             </select>
 
           </div>
@@ -1138,10 +1272,13 @@ function ReportsPage({ visitors }) {
             <select
               value={period}
               onChange={(e) =>
-                setPeriod(e.target.value)
+                setPeriod(
+                  e.target.value
+                )
               }
               style={styles.input}
             >
+
               <option>
                 Today
               </option>
@@ -1157,6 +1294,7 @@ function ReportsPage({ visitors }) {
               <option>
                 Last 30 Days
               </option>
+
             </select>
 
           </div>
@@ -1213,6 +1351,7 @@ function ReportsPage({ visitors }) {
         <div style={styles.tableHeader}>
 
           <div>
+
             <h2 style={styles.tableTitle}>
               Visitor Activity Report
             </h2>
@@ -1220,6 +1359,7 @@ function ReportsPage({ visitors }) {
             <p style={styles.tableSubtitle}>
               {reportType} · {period}
             </p>
+
           </div>
 
           <button
@@ -1240,6 +1380,7 @@ function ReportsPage({ visitors }) {
           <table style={styles.table}>
 
             <thead>
+
               <tr>
 
                 <th style={styles.th}>
@@ -1263,13 +1404,20 @@ function ReportsPage({ visitors }) {
                 </th>
 
               </tr>
+
             </thead>
 
             <tbody>
 
               {visitors.map(
                 (visitor, index) => (
-                  <tr key={index}>
+
+                  <tr
+                    key={
+                      visitor.id ||
+                      index
+                    }
+                  >
 
                     <td style={styles.td}>
                       {visitor.name}
@@ -1288,14 +1436,17 @@ function ReportsPage({ visitors }) {
                     </td>
 
                     <td style={styles.td}>
+
                       <StatusBadge
                         status={
                           visitor.status
                         }
                       />
+
                     </td>
 
                   </tr>
+
                 )
               )}
 
@@ -1317,72 +1468,128 @@ function ReportsPage({ visitors }) {
 ===================================================== */
 
 function SettingsPage() {
-  const [notifications, setNotifications] = useState(true);
-  const [autoCheckout, setAutoCheckout] = useState(false);
-  const [approval, setApproval] = useState(true);
 
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] =
+    useState(true);
 
-  // Get settings from backend
+  const [autoCheckout, setAutoCheckout] =
+    useState(false);
+
+  const [approval, setApproval] =
+    useState(true);
+
+  const [saved, setSaved] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
   useEffect(() => {
+
     const fetchSettings = async () => {
+
       try {
+
         const response = await fetch(
           "http://localhost:5000/api/settings"
         );
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
-        setApproval(data.autoApproval);
-        setAutoCheckout(data.autoCheckout);
-        setNotifications(data.notifications);
+        setApproval(
+          data.autoApproval ?? true
+        );
+
+        setAutoCheckout(
+          data.autoCheckout ?? false
+        );
+
+        setNotifications(
+          data.notifications ?? true
+        );
+
       } catch (error) {
-        console.error("Failed to fetch settings:", error);
+
+        console.error(
+          "Failed to fetch settings:",
+          error
+        );
+
       } finally {
+
         setLoading(false);
+
       }
     };
 
     fetchSettings();
+
   }, []);
 
-  // Save settings to backend
   const saveSettings = async () => {
+
     try {
+
       const response = await fetch(
         "http://localhost:5000/api/settings",
         {
           method: "PUT",
+
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
+
           body: JSON.stringify({
-            autoApproval: approval,
-            autoCheckout: autoCheckout,
-            notifications: notifications,
+            autoApproval:
+              approval,
+
+            autoCheckout:
+              autoCheckout,
+
+            notifications:
+              notifications,
           }),
         }
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (response.ok) {
+
         setSaved(true);
 
         setTimeout(() => {
           setSaved(false);
         }, 2500);
+
       } else {
-        console.error("Failed to save settings:", data);
+
+        console.error(
+          "Failed to save settings:",
+          data
+        );
+
       }
+
     } catch (error) {
-      console.error("Failed to save settings:", error);
+
+      console.error(
+        "Failed to save settings:",
+        error
+      );
+
     }
   };
 
   if (loading) {
-    return <div>Loading settings...</div>;
+    return (
+      <div>
+        Loading settings...
+      </div>
+    );
   }
 
   return (
@@ -1391,6 +1598,7 @@ function SettingsPage() {
       <div style={styles.pageHeader}>
 
         <div>
+
           <h1 style={styles.heading}>
             System Settings
           </h1>
@@ -1398,6 +1606,7 @@ function SettingsPage() {
           <p style={styles.subtitle}>
             Manage system preferences and security settings.
           </p>
+
         </div>
 
         <button
@@ -1463,18 +1672,35 @@ function SettingsPage() {
         </h2>
 
         <div style={styles.infoRow}>
-          <span>System Name</span>
-          <strong>SECURE-PASS</strong>
+          <span>
+            System Name
+          </span>
+
+          <strong>
+            SECURE-PASS
+          </strong>
         </div>
 
         <div style={styles.infoRow}>
-          <span>Version</span>
-          <strong>1.0.0</strong>
+          <span>
+            Version
+          </span>
+
+          <strong>
+            1.0.0
+          </strong>
         </div>
 
         <div style={styles.infoRow}>
-          <span>System Status</span>
-          <strong style={{ color: "#166534" }}>
+          <span>
+            System Status
+          </span>
+
+          <strong
+            style={{
+              color: "#166534",
+            }}
+          >
             ● Online
           </strong>
         </div>
@@ -1494,6 +1720,7 @@ function PreRegistrationPage({
   onBack,
   onSubmit,
 }) {
+
   const [name, setName] =
     useState("");
 
@@ -1518,17 +1745,21 @@ function PreRegistrationPage({
   const [time, setTime] =
     useState("");
 
-  const submit = () => {
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const submit = async () => {
 
     if (
-      !name ||
-      !email ||
-      !phone ||
-      !host ||
-      !purpose ||
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !host.trim() ||
+      !purpose.trim() ||
       !date ||
       !time
     ) {
+
       alert(
         "Please fill in all required fields."
       );
@@ -1536,13 +1767,145 @@ function PreRegistrationPage({
       return;
     }
 
-    onSubmit({
-      name,
-      purpose,
-      host,
-      time,
-      status: "Pending",
-    });
+    try {
+
+      setSubmitting(true);
+
+      const visitDateTime =
+        new Date(
+          `${date}T${time}`
+        ).toISOString();
+
+      const response =
+        await fetch(
+          "http://localhost:5000/api/visitors",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              visitorName:
+                name.trim(),
+
+              phone:
+                phone.trim(),
+
+              email:
+                email.trim(),
+
+              purpose:
+                purpose.trim(),
+
+              host:
+                host.trim(),
+
+              visitDateTime:
+                visitDateTime,
+
+              status:
+                "Pending",
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
+
+      console.log(
+        "NEW VISITOR FROM BACKEND:",
+        data
+      );
+
+      if (!response.ok) {
+
+        console.error(
+          "Failed to register visitor:",
+          data
+        );
+
+        alert(
+          data.message ||
+            "Failed to register visitor."
+        );
+
+        return;
+      }
+
+      /*
+        The backend successfully created
+        the visitor.
+
+        We send the created visitor back
+        to App.jsx.
+
+        IMPORTANT:
+        There is NO goTo() here.
+      */
+
+      onSubmit({
+
+        id:
+          data._id,
+
+        name:
+          data.visitorName,
+
+        purpose:
+          data.purpose || "",
+
+        host:
+          data.host || "",
+
+        time:
+          data.visitDateTime
+            ? new Date(
+                data.visitDateTime
+              ).toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              )
+            : "",
+
+        status:
+          data.status ===
+          "Checked-in"
+            ? "Active"
+            : data.status ===
+              "Checked-out"
+            ? "Checked Out"
+            : data.status ===
+              "Approved"
+            ? "Active"
+            : data.status ===
+              "Rejected"
+            ? "Rejected"
+            : "Pending",
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Failed to register visitor:",
+        error
+      );
+
+      alert(
+        "Unable to connect to the backend."
+      );
+
+    } finally {
+
+      setSubmitting(false);
+
+    }
   };
 
   return (
@@ -1551,6 +1914,7 @@ function PreRegistrationPage({
       <div style={styles.pageHeader}>
 
         <div>
+
           <h1 style={styles.heading}>
             New Pre-Registration
           </h1>
@@ -1558,11 +1922,13 @@ function PreRegistrationPage({
           <p style={styles.subtitle}>
             Register a visitor before their arrival.
           </p>
+
         </div>
 
         <button
           onClick={onBack}
           style={styles.smallButton}
+          disabled={submitting}
         >
           ← Back
         </button>
@@ -1641,6 +2007,7 @@ function PreRegistrationPage({
           <button
             onClick={onBack}
             style={styles.cancelButton}
+            disabled={submitting}
           >
             Cancel
           </button>
@@ -1648,8 +2015,11 @@ function PreRegistrationPage({
           <button
             onClick={submit}
             style={styles.registerButton}
+            disabled={submitting}
           >
-            Submit Pre-Registration
+            {submitting
+              ? "Submitting..."
+              : "Submit Pre-Registration"}
           </button>
 
         </div>
@@ -1701,17 +2071,22 @@ function StatCard({
 
 function StatusBadge({ status }) {
 
-  let style = styles.activeBadge;
+  let style =
+    styles.activeBadge;
 
   if (
     status === "Pending" ||
     status === "Warning"
   ) {
-    style = styles.pendingBadge;
+    style =
+      styles.pendingBadge;
   }
 
-  if (status === "Checked Out") {
-    style = styles.checkedOutBadge;
+  if (
+    status === "Checked Out"
+  ) {
+    style =
+      styles.checkedOutBadge;
   }
 
   return (
@@ -1737,6 +2112,7 @@ function SettingRow({
     <div style={styles.settingRow}>
 
       <div>
+
         <div style={styles.settingTitle}>
           {title}
         </div>
@@ -1744,10 +2120,13 @@ function SettingRow({
         <div style={styles.settingDescription}>
           {description}
         </div>
+
       </div>
 
       <button
-        onClick={() => onChange(!checked)}
+        onClick={() =>
+          onChange(!checked)
+        }
         style={{
           ...styles.toggle,
           ...(checked
@@ -1755,6 +2134,7 @@ function SettingRow({
             : styles.toggleOff),
         }}
       >
+
         <span
           style={{
             ...styles.toggleCircle,
@@ -1763,6 +2143,7 @@ function SettingRow({
               : styles.circleOff),
           }}
         />
+
       </button>
 
     </div>
@@ -1788,7 +2169,9 @@ function FormInput({
         type={type}
         value={value}
         onChange={(e) =>
-          onChange(e.target.value)
+          onChange(
+            e.target.value
+          )
         }
         placeholder={placeholder}
         style={styles.input}
@@ -1799,11 +2182,18 @@ function FormInput({
 }
 
 
-function downloadFile(content, filename) {
+function downloadFile(
+  content,
+  filename
+) {
 
-  const blob = new Blob([content], {
-    type: "text/csv;charset=utf-8;",
-  });
+  const blob = new Blob(
+    [content],
+    {
+      type:
+        "text/csv;charset=utf-8;",
+    }
+  );
 
   const url =
     URL.createObjectURL(blob);
@@ -1843,7 +2233,8 @@ const styles = {
     width: "240px",
     minHeight: "100vh",
     background: "#ffffff",
-    borderRight: "1px solid #e5e7eb",
+    borderRight:
+      "1px solid #e5e7eb",
     flexShrink: 0,
   },
 
@@ -1852,7 +2243,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     padding: "0 24px",
-    borderBottom: "1px solid #e5e7eb",
+    borderBottom:
+      "1px solid #e5e7eb",
   },
 
   logoBox: {
@@ -2105,7 +2497,8 @@ const styles = {
   tableSubtitle: {
     fontSize: "9px",
     color: "#9ca3af",
-    margin: "3px 0 0",
+    margin:
+      "3px 0 0",
   },
 
   tableActions: {
