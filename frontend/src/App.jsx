@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -1317,25 +1317,73 @@ function ReportsPage({ visitors }) {
 ===================================================== */
 
 function SettingsPage() {
-  const [notifications, setNotifications] =
-    useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [autoCheckout, setAutoCheckout] = useState(false);
+  const [approval, setApproval] = useState(true);
 
-  const [autoCheckout, setAutoCheckout] =
-    useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [approval, setApproval] =
-    useState(true);
+  // Get settings from backend
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/settings"
+        );
 
-  const [saved, setSaved] =
-    useState(false);
+        const data = await response.json();
 
-  const saveSettings = () => {
-    setSaved(true);
+        setApproval(data.autoApproval);
+        setAutoCheckout(data.autoCheckout);
+        setNotifications(data.notifications);
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setTimeout(() => {
-      setSaved(false);
-    }, 2500);
+    fetchSettings();
+  }, []);
+
+  // Save settings to backend
+  const saveSettings = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/settings",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            autoApproval: approval,
+            autoCheckout: autoCheckout,
+            notifications: notifications,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSaved(true);
+
+        setTimeout(() => {
+          setSaved(false);
+        }, 2500);
+      } else {
+        console.error("Failed to save settings:", data);
+      }
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+    }
   };
+
+  if (loading) {
+    return <div>Loading settings...</div>;
+  }
 
   return (
     <div>
