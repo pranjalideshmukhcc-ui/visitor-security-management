@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
-
-  // Visitors are loaded from backend
   const [visitors, setVisitors] = useState([]);
+  const [search, setSearch] = useState("");
 
   // Load visitors from backend
   useEffect(() => {
@@ -30,12 +30,13 @@ function App() {
             purpose: visitor.purpose || "",
             host: visitor.host || "",
             time: visitor.visitDateTime
-              ? new Date(
-                  visitor.visitDateTime
-                ).toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+              ? new Date(visitor.visitDateTime).toLocaleTimeString(
+                  "en-US",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )
               : "",
             status:
               visitor.status === "Checked-in"
@@ -51,31 +52,50 @@ function App() {
 
         setVisitors(formattedVisitors);
       } catch (error) {
-        console.error(
-          "Failed to fetch visitors:",
-          error
-        );
+        console.error("Failed to fetch visitors:", error);
       }
     };
 
     fetchVisitors();
   }, []);
 
-  const [search, setSearch] = useState("");
-
   const navItems = [
-    { name: "Dashboard", icon: "▦" },
-    { name: "Hosts", icon: "👤" },
-    { name: "Visitors", icon: "👥" },
-    { name: "Security Logs", icon: "▤" },
-    { name: "Reports", icon: "▥" },
-    { name: "Add Visitor", icon: "＋" },
-    { name: "Settings", icon: "⚙" },
+    "Dashboard",
+    "Visitors",
+    "Security Logs",
+    "Reports",
+    "System Settings",
   ];
 
   const goTo = (page) => {
     setActivePage(page);
-    setSearch("");
+  };
+
+  const exportCSV = () => {
+    const csv =
+      "Visitor Name,Purpose,Host,Time,Status\n" +
+      visitors
+        .map(
+          (v) =>
+            `"${v.name}","${v.purpose}","${v.host}","${v.time}","${v.status}"`
+        )
+        .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "visitor-report.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
 
   const checkOut = (visitorId) => {
@@ -84,7 +104,6 @@ function App() {
         visitor.id === visitorId
           ? {
               ...visitor,
-              checkOut: "Now",
               status: "Checked Out",
             }
           : visitor
@@ -93,32 +112,21 @@ function App() {
   };
 
   const filteredVisitors = visitors.filter((visitor) => {
-    const text = search.toLowerCase();
+    const value =
+      `${visitor.name} ${visitor.purpose} ${visitor.host}`.toLowerCase();
 
-    return (
-      visitor.name.toLowerCase().includes(text) ||
-      visitor.company.toLowerCase().includes(text) ||
-      visitor.host.toLowerCase().includes(text) ||
-      visitor.purpose.toLowerCase().includes(text)
-    );
+    return value.includes(search.toLowerCase());
   });
-
-  const totalVisitors = visitors.length;
-  const checkedIn = visitors.filter(
-    (visitor) => visitor.status === "Checked In"
-  ).length;
-  const checkedOut = visitors.filter(
-    (visitor) => visitor.status === "Checked Out"
-  ).length;
 
   return (
     <div style={styles.app}>
-
-      {/* ================= SIDEBAR ================= */}
-
       <aside style={styles.sidebar}>
         <div style={styles.logoArea}>
-          <div style={styles.logoBox}>S</div>
+          <img
+            src="/visitra logo.jpeg"
+            alt="SECURE-PASS"
+            style={styles.logoImage}
+          />
 
           <span style={styles.logoText}>
             SECURE-PASS
@@ -126,24 +134,30 @@ function App() {
         </div>
 
         <div style={styles.sidebarContent}>
-
           <p style={styles.sectionTitle}>
             NAVIGATION
           </p>
 
           {navItems.map((item) => (
             <button
-              key={item.name}
-              onClick={() => goTo(item.name)}
+              key={item}
+              onClick={() => goTo(item)}
               style={{
-                ...styles.navItem,
-                ...(activePage === item.name
-                  ? styles.navItemActive
+                ...styles.navButton,
+                ...(activePage === item
+                  ? styles.activeNav
                   : {}),
               }}
             >
-              <span style={styles.navIcon}>{item.icon}</span>
-              <span>{item.name}</span>
+              <span style={styles.navIcon}>
+                {item === "Dashboard" && "▣"}
+                {item === "Visitors" && "♙"}
+                {item === "Security Logs" && "⊗"}
+                {item === "Reports" && "▤"}
+                {item === "System Settings" && "⚙"}
+              </span>
+
+              {item}
             </button>
           ))}
 
@@ -167,10 +181,7 @@ function App() {
                 : {}),
             }}
           >
-            <span style={styles.navIcon}>
-              ⊕
-            </span>
-
+            <span style={styles.navIcon}>⊕</span>
             New Pre-Registration
           </button>
 
@@ -180,43 +191,26 @@ function App() {
             }
             style={styles.navButton}
           >
-            <span style={styles.navIcon}>
-              ♙
-            </span>
-
+            <span style={styles.navIcon}>♙</span>
             Issue Temp Pass
           </button>
-
         </div>
       </aside>
 
-      {/* ================= MAIN AREA ================= */}
-
       <div style={styles.mainArea}>
-
-        {/* ================= NAVBAR ================= */}
-
         <header style={styles.navbar}>
-
           <div style={styles.searchBox}>
-
-            <span style={styles.searchIcon}>
-              ⌕
-            </span>
+            <span style={styles.searchIcon}>⌕</span>
 
             <input
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search visitors, hosts, logs..."
               style={styles.searchInput}
             />
-
           </div>
 
           <div style={styles.userArea}>
-
             <button
               onClick={() =>
                 alert("No new notifications.")
@@ -226,12 +220,9 @@ function App() {
               ♧
             </button>
 
-            <div style={styles.avatar}>
-              AD
-            </div>
+            <div style={styles.avatar}>AD</div>
 
             <div>
-
               <div style={styles.adminName}>
                 Admin User
               </div>
@@ -239,26 +230,15 @@ function App() {
               <div style={styles.adminRole}>
                 Command Center
               </div>
-
             </div>
-
           </div>
-
         </header>
 
-        {/* ================= CONTENT ================= */}
-
         <main style={styles.content}>
-
-          {/* ================= DASHBOARD ================= */}
-
           {activePage === "Dashboard" && (
             <>
-
               <div style={styles.pageHeader}>
-
                 <div>
-
                   <h1 style={styles.heading}>
                     Dashboard Overview
                   </h1>
@@ -267,7 +247,6 @@ function App() {
                     Real-time monitoring of campus
                     visitors and security logs.
                   </p>
-
                 </div>
 
                 <button
@@ -278,11 +257,9 @@ function App() {
                 >
                   ⊕ &nbsp; Register New Visitor
                 </button>
-
               </div>
 
               <div style={styles.statsGrid}>
-
                 <StatCard
                   title="Total Visitors Today"
                   value={visitors.length}
@@ -294,8 +271,7 @@ function App() {
                   title="Checked In"
                   value={
                     visitors.filter(
-                      (v) =>
-                        v.status === "Active"
+                      (v) => v.status === "Active"
                     ).length
                   }
                   description="Currently on-site"
@@ -306,8 +282,7 @@ function App() {
                   title="Checked Out"
                   value={
                     visitors.filter(
-                      (v) =>
-                        v.status === "Checked Out"
+                      (v) => v.status === "Checked Out"
                     ).length
                   }
                   description="Completed visits"
@@ -318,22 +293,17 @@ function App() {
                   title="Pending Approvals"
                   value={
                     visitors.filter(
-                      (v) =>
-                        v.status === "Pending"
+                      (v) => v.status === "Pending"
                     ).length
                   }
                   description="Awaiting host confirmation"
                   icon="◷"
                 />
-
               </div>
 
               <div style={styles.tableCard}>
-
                 <div style={styles.tableHeader}>
-
                   <div>
-
                     <h2 style={styles.tableTitle}>
                       Recent Visitors Log
                     </h2>
@@ -342,16 +312,12 @@ function App() {
                       Live feed of entries and exits
                       in past 12 hours
                     </p>
-
                   </div>
 
                   <div style={styles.tableActions}>
-
                     <button
                       onClick={() =>
-                        alert(
-                          "Filter options opened."
-                        )
+                        alert("Filter options opened.")
                       }
                       style={styles.smallButton}
                     >
@@ -364,71 +330,48 @@ function App() {
                     >
                       Export CSV
                     </button>
-
                   </div>
-
                 </div>
 
-                <div
-                  style={{
-                    overflowX: "auto",
-                  }}
-                >
-
+                <div style={{ overflowX: "auto" }}>
                   <table style={styles.table}>
-
                     <thead>
-
                       <tr>
-
                         <th style={styles.th}>
                           Visitor Name
                         </th>
-
                         <th style={styles.th}>
                           Purpose of Visit
                         </th>
-
                         <th style={styles.th}>
                           Host Personnel
                         </th>
-
                         <th style={styles.th}>
                           Check-in Time
                         </th>
-
                         <th style={styles.th}>
                           Status
                         </th>
-
                         <th style={styles.th}>
                           Actions
                         </th>
-
                       </tr>
-
                     </thead>
 
                     <tbody>
-
                       {filteredVisitors.map(
                         (visitor, index) => (
-
                           <tr
                             key={
-                              visitor.id ||
-                              index
+                              visitor.id || index
                             }
                           >
-
                             <td style={styles.td}>
-
                               <div
                                 style={
                                   styles.visitorName
                                 }
                               >
-
                                 <span
                                   style={
                                     styles.initial
@@ -440,37 +383,30 @@ function App() {
                                 </span>
 
                                 {visitor.name}
-
                               </div>
-
                             </td>
 
-                  <td style={styles.td}>{visitor.company}</td>
-                  <td style={styles.td}>{visitor.host}</td>
-                  <td style={styles.td}>{visitor.purpose}</td>
-                  <td style={styles.td}>{visitor.checkIn}</td>
-                  <td style={styles.td}>{visitor.checkOut}</td>
+                            <td style={styles.td}>
+                              {visitor.purpose}
+                            </td>
 
-                  <td style={styles.td}>
-                    <StatusBadge status={visitor.status} />
-                  </td>
+                            <td style={styles.td}>
+                              {visitor.host}
+                            </td>
 
                             <td style={styles.td}>
                               {visitor.time}
                             </td>
 
                             <td style={styles.td}>
-
                               <StatusBadge
                                 status={
                                   visitor.status
                                 }
                               />
-
                             </td>
 
                             <td style={styles.td}>
-
                               <button
                                 onClick={() =>
                                   alert(
@@ -486,10 +422,11 @@ function App() {
 
                               {visitor.status !==
                                 "Checked Out" && (
-
                                 <button
                                   onClick={() =>
-                                    checkOut(index)
+                                    checkOut(
+                                      visitor.id
+                                    )
                                   }
                                   style={
                                     styles.checkoutButton
@@ -497,28 +434,17 @@ function App() {
                                 >
                                   Check Out
                                 </button>
-
                               )}
-
                             </td>
-
                           </tr>
-
                         )
                       )}
-
                     </tbody>
-
                   </table>
-
                 </div>
-
               </div>
-
             </>
           )}
-
-          {/* ================= VISITORS ================= */}
 
           {activePage === "Visitors" && (
             <VisitorsPage
@@ -530,35 +456,22 @@ function App() {
             />
           )}
 
-          {/* ================= SECURITY LOGS ================= */}
-
           {activePage === "Security Logs" && (
             <SecurityLogsPage />
           )}
 
-          {/* ================= REPORTS ================= */}
-
           {activePage === "Reports" && (
-            <ReportsPage
-              visitors={visitors}
-            />
+            <ReportsPage visitors={visitors} />
           )}
-
-          {/* ================= SETTINGS ================= */}
 
           {activePage === "System Settings" && (
             <SettingsPage />
           )}
 
-          {/* ================= PRE REGISTRATION ================= */}
-
           {activePage === "Pre-Registration" && (
             <PreRegistrationPage
-              onBack={() =>
-                goTo("Dashboard")
-              }
+              onBack={() => goTo("Dashboard")}
               onSubmit={(newVisitor) => {
-
                 setVisitors((current) => [
                   ...current,
                   newVisitor,
@@ -569,30 +482,29 @@ function App() {
                 );
 
                 goTo("Visitors");
-
               }}
             />
           )}
-
         </main>
-
       </div>
     </div>
   );
 }
 
-/* =========================
-   VISITOR TABLE
-========================= */
 
-function VisitorTable({ visitors, showAction = false }) {
+/* =====================================================
+   VISITORS PAGE
+===================================================== */
+
+function VisitorsPage({
+  visitors,
+  onRegister,
+  onCheckOut,
+}) {
   return (
     <div>
-
       <div style={styles.pageHeader}>
-
         <div>
-
           <h1 style={styles.heading}>
             Visitors
           </h1>
@@ -600,7 +512,6 @@ function VisitorTable({ visitors, showAction = false }) {
           <p style={styles.subtitle}>
             Manage registered visitors and their visits.
           </p>
-
         </div>
 
         <button
@@ -609,11 +520,9 @@ function VisitorTable({ visitors, showAction = false }) {
         >
           ⊕ &nbsp; Register New Visitor
         </button>
-
       </div>
 
       <div style={styles.statsGrid}>
-
         <StatCard
           title="Total Visitors"
           value={visitors.length}
@@ -647,22 +556,17 @@ function VisitorTable({ visitors, showAction = false }) {
           title="Checked Out"
           value={
             visitors.filter(
-              (v) =>
-                v.status === "Checked Out"
+              (v) => v.status === "Checked Out"
             ).length
           }
           description="Completed visits"
           icon="✓"
         />
-
       </div>
 
       <div style={styles.tableCard}>
-
         <div style={styles.tableHeader}>
-
           <div>
-
             <h2 style={styles.tableTitle}>
               Visitor Records
             </h2>
@@ -670,71 +574,49 @@ function VisitorTable({ visitors, showAction = false }) {
             <p style={styles.tableSubtitle}>
               All registered visitors
             </p>
-
           </div>
-
         </div>
 
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
+        <div style={{ overflowX: "auto" }}>
           <table style={styles.table}>
-
             <thead>
-
               <tr>
-
                 <th style={styles.th}>
                   Visitor Name
                 </th>
-
                 <th style={styles.th}>
                   Purpose
                 </th>
-
                 <th style={styles.th}>
                   Host
                 </th>
-
                 <th style={styles.th}>
                   Time
                 </th>
-
                 <th style={styles.th}>
                   Status
                 </th>
-
                 <th style={styles.th}>
                   Action
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {visitors.map(
                 (visitor, index) => (
-
                   <tr
                     key={
                       visitor.id ||
                       index
                     }
                   >
-
                     <td style={styles.td}>
-
                       <div
                         style={
                           styles.visitorName
                         }
                       >
-
                         <span
                           style={
                             styles.initial
@@ -746,43 +628,37 @@ function VisitorTable({ visitors, showAction = false }) {
                         </span>
 
                         {visitor.name}
-
                       </div>
-
                     </td>
 
-              <td style={styles.td}>{visitor.company}</td>
-              <td style={styles.td}>{visitor.host}</td>
-              <td style={styles.td}>{visitor.purpose}</td>
-              <td style={styles.td}>{visitor.checkIn}</td>
-              <td style={styles.td}>{visitor.checkOut}</td>
+                    <td style={styles.td}>
+                      {visitor.purpose}
+                    </td>
 
-              <td style={styles.td}>
-                <StatusBadge status={visitor.status} />
-              </td>
+                    <td style={styles.td}>
+                      {visitor.host}
+                    </td>
 
                     <td style={styles.td}>
                       {visitor.time}
                     </td>
 
                     <td style={styles.td}>
-
                       <StatusBadge
                         status={
                           visitor.status
                         }
                       />
-
                     </td>
 
                     <td style={styles.td}>
-
                       {visitor.status !==
                         "Checked Out" && (
-
                         <button
                           onClick={() =>
-                            onCheckOut(index)
+                            onCheckOut(
+                              visitor.id
+                            )
                           }
                           style={
                             styles.checkoutButton
@@ -790,34 +666,25 @@ function VisitorTable({ visitors, showAction = false }) {
                         >
                           Check Out
                         </button>
-
                       )}
-
                     </td>
-
                   </tr>
-
                 )
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
-/* =========================
-   SECURITY LOGS
-========================= */
+
+/* =====================================================
+   SECURITY LOGS PAGE
+===================================================== */
 
 function SecurityLogsPage() {
-
   const [search, setSearch] =
     useState("");
 
@@ -868,14 +735,11 @@ function SecurityLogsPage() {
   ];
 
   const filteredLogs = logs.filter((log) => {
-
     const text =
       `${log.user} ${log.action} ${log.visitor} ${log.location}`.toLowerCase();
 
     const matchesSearch =
-      text.includes(
-        search.toLowerCase()
-      );
+      text.includes(search.toLowerCase());
 
     const matchesFilter =
       filter === "All" ||
@@ -888,7 +752,6 @@ function SecurityLogsPage() {
   });
 
   const exportLogs = () => {
-
     const csv =
       "Time,User,Action,Visitor,Location,Status\n" +
       filteredLogs
@@ -906,11 +769,8 @@ function SecurityLogsPage() {
 
   return (
     <div>
-
       <div style={styles.pageHeader}>
-
         <div>
-
           <h1 style={styles.heading}>
             Security Logs
           </h1>
@@ -926,11 +786,9 @@ function SecurityLogsPage() {
         >
           ↓ &nbsp; Export Logs
         </button>
-
       </div>
 
       <div style={styles.statsGrid}>
-
         <StatCard
           title="Total Events"
           value={logs.length}
@@ -968,15 +826,11 @@ function SecurityLogsPage() {
           description="All systems operational"
           icon="●"
         />
-
       </div>
 
       <div style={styles.tableCard}>
-
         <div style={styles.tableHeader}>
-
           <div>
-
             <h2 style={styles.tableTitle}>
               Activity Log
             </h2>
@@ -987,7 +841,6 @@ function SecurityLogsPage() {
           </div>
 
           <div style={styles.tableActions}>
-
             <input
               value={search}
               onChange={(e) =>
@@ -1004,7 +857,6 @@ function SecurityLogsPage() {
               }
               style={styles.smallSelect}
             >
-
               <option value="All">
                 All Events
               </option>
@@ -1016,60 +868,39 @@ function SecurityLogsPage() {
               <option value="Warning">
                 Warnings
               </option>
-
             </select>
-
           </div>
-
         </div>
 
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
+        <div style={{ overflowX: "auto" }}>
           <table style={styles.table}>
-
             <thead>
-
               <tr>
-
                 <th style={styles.th}>
                   TIME
                 </th>
-
                 <th style={styles.th}>
                   USER
                 </th>
-
                 <th style={styles.th}>
                   ACTION
                 </th>
-
                 <th style={styles.th}>
                   VISITOR
                 </th>
-
                 <th style={styles.th}>
                   LOCATION
                 </th>
-
                 <th style={styles.th}>
                   STATUS
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {filteredLogs.map(
                 (log, index) => (
-
                   <tr key={index}>
-
                     <td style={styles.td}>
                       {log.time}
                     </td>
@@ -1091,38 +922,29 @@ function SecurityLogsPage() {
                     </td>
 
                     <td style={styles.td}>
-
                       <StatusBadge
                         status={
                           log.status
                         }
                       />
-
                     </td>
-
                   </tr>
-
                 )
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
-/* =========================
-   REPORTS
-========================= */
+
+/* =====================================================
+   REPORTS PAGE
+===================================================== */
 
 function ReportsPage({ visitors }) {
-
   const [reportType, setReportType] =
     useState("Visitor Activity");
 
@@ -1130,7 +952,6 @@ function ReportsPage({ visitors }) {
     useState("Today");
 
   const exportReport = () => {
-
     const csv =
       "Visitor Name,Host,Purpose,Time,Status\n" +
       visitors
@@ -1151,29 +972,22 @@ function ReportsPage({ visitors }) {
       (v) => v.status === "Active"
     ).length;
 
-  const checkedOut = visitors.filter(
-    (visitor) => visitor.status === "Checked Out"
-  ).length;
+  const checkedOut =
+    visitors.filter(
+      (v) =>
+        v.status === "Checked Out"
+    ).length;
 
-  const downloadReport = () => {
-    const csv = [
-      "Name,Company,Host,Purpose,Check In,Check Out,Status",
-      ...visitors.map(
-        (visitor) =>
-          `"${visitor.name}","${visitor.company}","${visitor.host}","${visitor.purpose}","${visitor.checkIn}","${visitor.checkOut}","${visitor.status}"`
-      ),
-    ].join("\n");
-
-    downloadFile(csv, "visitra-visitor-report.csv", "text/csv");
-  };
+  const pending =
+    visitors.filter(
+      (v) =>
+        v.status === "Pending"
+    ).length;
 
   return (
     <div>
-
       <div style={styles.pageHeader}>
-
         <div>
-
           <h1 style={styles.heading}>
             Reports
           </h1>
@@ -1184,16 +998,14 @@ function ReportsPage({ visitors }) {
         </div>
 
         <button
-          style={styles.primaryButton}
-          onClick={downloadReport}
+          onClick={exportReport}
+          style={styles.registerButton}
         >
-          ↓ Export Report
+          ↓ &nbsp; Export Report
         </button>
-
       </div>
 
       <div style={styles.formCard}>
-
         <h2 style={styles.formTitle}>
           Generate Report
         </h2>
@@ -1203,9 +1015,7 @@ function ReportsPage({ visitors }) {
         </p>
 
         <div style={styles.reportControls}>
-
           <div style={styles.controlGroup}>
-
             <label style={styles.label}>
               REPORT TYPE
             </label>
@@ -1219,29 +1029,22 @@ function ReportsPage({ visitors }) {
               }
               style={styles.input}
             >
-
               <option>
                 Visitor Activity
               </option>
-
               <option>
                 Security Activity
               </option>
-
               <option>
                 Check-in / Check-out
               </option>
-
               <option>
                 Pending Visitors
               </option>
-
             </select>
-
           </div>
 
           <div style={styles.controlGroup}>
-
             <label style={styles.label}>
               TIME PERIOD
             </label>
@@ -1255,25 +1058,19 @@ function ReportsPage({ visitors }) {
               }
               style={styles.input}
             >
-
               <option>
                 Today
               </option>
-
               <option>
                 This Week
               </option>
-
               <option>
                 This Month
               </option>
-
               <option>
                 Last 30 Days
               </option>
-
             </select>
-
           </div>
 
           <button
@@ -1286,47 +1083,42 @@ function ReportsPage({ visitors }) {
           >
             Generate Report
           </button>
-
         </div>
-
       </div>
 
       <div style={styles.statsGrid}>
         <StatCard
-          title="Total Records"
+          title="Total Visitors"
           value={visitors.length}
-          icon="▤"
-          description="Visitor records"
+          description="Registered visitors"
+          icon="♙"
         />
 
         <StatCard
           title="Checked In"
           value={checkedIn}
-          icon="✓"
-          description="Currently active"
+          description="Currently inside"
+          icon="⇥"
         />
 
         <StatCard
           title="Checked Out"
           value={checkedOut}
-          icon="↗"
           description="Completed visits"
+          icon="✓"
         />
 
         <StatCard
-          title="System Status"
-          value="Active"
-          icon="◉"
-          description="Reporting system"
+          title="Pending"
+          value={pending}
+          description="Awaiting approval"
+          icon="◷"
         />
       </div>
 
       <div style={styles.tableCard}>
-
         <div style={styles.tableHeader}>
-
           <div>
-
             <h2 style={styles.tableTitle}>
               Visitor Activity Report
             </h2>
@@ -1342,57 +1134,39 @@ function ReportsPage({ visitors }) {
           >
             Export CSV
           </button>
-
         </div>
 
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
+        <div style={{ overflowX: "auto" }}>
           <table style={styles.table}>
-
             <thead>
-
               <tr>
-
                 <th style={styles.th}>
                   VISITOR
                 </th>
-
                 <th style={styles.th}>
                   HOST
                 </th>
-
                 <th style={styles.th}>
                   PURPOSE
                 </th>
-
                 <th style={styles.th}>
                   TIME
                 </th>
-
                 <th style={styles.th}>
                   STATUS
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {visitors.map(
                 (visitor, index) => (
-
                   <tr
                     key={
                       visitor.id ||
                       index
                     }
                   >
-
                     <td style={styles.td}>
                       {visitor.name}
                     </td>
@@ -1410,38 +1184,29 @@ function ReportsPage({ visitors }) {
                     </td>
 
                     <td style={styles.td}>
-
                       <StatusBadge
                         status={
                           visitor.status
                         }
                       />
-
                     </td>
-
                   </tr>
-
                 )
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
-/* =========================
-   HOSTS
-========================= */
+
+/* =====================================================
+   SYSTEM SETTINGS
+===================================================== */
 
 function SettingsPage() {
-
   const [notifications, setNotifications] =
     useState(true);
 
@@ -1458,17 +1223,21 @@ function SettingsPage() {
     useState(true);
 
   useEffect(() => {
-
     const fetchSettings = async () => {
-
       try {
-
         const response = await fetch(
           "http://localhost:5000/api/settings"
         );
 
         const data =
           await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Failed to fetch settings"
+          );
+        }
 
         setApproval(
           data.autoApproval ?? true
@@ -1481,48 +1250,33 @@ function SettingsPage() {
         setNotifications(
           data.notifications ?? true
         );
-
       } catch (error) {
-
         console.error(
           "Failed to fetch settings:",
           error
         );
-
       } finally {
-
         setLoading(false);
-
       }
     };
 
     fetchSettings();
-
   }, []);
 
   const saveSettings = async () => {
-
     try {
-
       const response = await fetch(
         "http://localhost:5000/api/settings",
         {
           method: "PUT",
-
           headers: {
             "Content-Type":
               "application/json",
           },
-
           body: JSON.stringify({
-            autoApproval:
-              approval,
-
-            autoCheckout:
-              autoCheckout,
-
-            notifications:
-              notifications,
+            autoApproval: approval,
+            autoCheckout: autoCheckout,
+            notifications: notifications,
           }),
         }
       );
@@ -1531,29 +1285,22 @@ function SettingsPage() {
         await response.json();
 
       if (response.ok) {
-
         setSaved(true);
 
         setTimeout(() => {
           setSaved(false);
         }, 2500);
-
       } else {
-
         console.error(
           "Failed to save settings:",
           data
         );
-
       }
-
     } catch (error) {
-
       console.error(
         "Failed to save settings:",
         error
       );
-
     }
   };
 
@@ -1567,11 +1314,8 @@ function SettingsPage() {
 
   return (
     <div>
-
       <div style={styles.pageHeader}>
-
         <div>
-
           <h1 style={styles.heading}>
             System Settings
           </h1>
@@ -1579,10 +1323,13 @@ function SettingsPage() {
           <p style={styles.subtitle}>
             Manage system preferences and security settings.
           </p>
-
         </div>
-        <button onClick={() => setShowForm((current) => !current)} style={styles.primaryButton}>
-          {showForm ? "Close Form" : "+ Add Host"}
+
+        <button
+          onClick={saveSettings}
+          style={styles.registerButton}
+        >
+          Save Changes
         </button>
       </div>
 
@@ -1593,9 +1340,7 @@ function SettingsPage() {
       )}
 
       <div style={styles.settingsGrid}>
-
         <div style={styles.formCard}>
-
           <h2 style={styles.formTitle}>
             Visitor Management
           </h2>
@@ -1613,11 +1358,9 @@ function SettingsPage() {
             checked={autoCheckout}
             onChange={setAutoCheckout}
           />
-
         </div>
 
         <div style={styles.formCard}>
-
           <h2 style={styles.formTitle}>
             Notifications
           </h2>
@@ -1628,41 +1371,28 @@ function SettingsPage() {
             checked={notifications}
             onChange={setNotifications}
           />
-
         </div>
-
       </div>
 
       <div style={styles.formCard}>
-
         <h2 style={styles.formTitle}>
           System Information
         </h2>
 
         <div style={styles.infoRow}>
-          <span>
-            System Name
-          </span>
+          <span>System Name</span>
 
-          <strong>
-            SECURE-PASS
-          </strong>
+          <strong>SECURE-PASS</strong>
         </div>
 
         <div style={styles.infoRow}>
-          <span>
-            Version
-          </span>
+          <span>Version</span>
 
-          <strong>
-            1.0.0
-          </strong>
+          <strong>1.0.0</strong>
         </div>
 
         <div style={styles.infoRow}>
-          <span>
-            System Status
-          </span>
+          <span>System Status</span>
 
           <strong
             style={{
@@ -1672,51 +1402,77 @@ function SettingsPage() {
             ● Online
           </strong>
         </div>
-
       </div>
-
     </div>
   );
 }
 
-/* =========================
-   PRE-REGISTRATION
-========================= */
+
+/* =====================================================
+   PRE REGISTRATION
+===================================================== */
 
 function PreRegistrationPage({
   onBack,
   onSubmit,
 }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [host, setHost] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
 
-  const [name, setName] =
-    useState("");
-
-  const [email, setEmail] =
-    useState("");
-
-  const [phone, setPhone] =
-    useState("");
-
-  const [company, setCompany] =
-    useState("");
-
-  const [host, setHost] =
-    useState("");
-
-  const [purpose, setPurpose] =
-    useState("");
-
-  const [date, setDate] =
-    useState("");
-
-  const [time, setTime] =
-    useState("");
-
+  const [hosts, setHosts] = useState([]);
+  const [loadingHosts, setLoadingHosts] =
+    useState(true);
   const [submitting, setSubmitting] =
     useState(false);
 
-  const submit = async () => {
+  // Fetch hosts from MongoDB
+  useEffect(() => {
+    const fetchHosts = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/hosts"
+        );
 
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Failed to fetch hosts"
+          );
+        }
+
+        console.log(
+          "HOSTS FROM BACKEND:",
+          data
+        );
+
+        setHosts(data);
+      } catch (error) {
+        console.error(
+          "Failed to fetch hosts:",
+          error
+        );
+
+        alert(
+          "Unable to load hosts from the backend."
+        );
+      } finally {
+        setLoadingHosts(false);
+      }
+    };
+
+    fetchHosts();
+  }, []);
+
+  const submit = async () => {
     if (
       !name.trim() ||
       !email.trim() ||
@@ -1726,7 +1482,6 @@ function PreRegistrationPage({
       !date ||
       !time
     ) {
-
       alert(
         "Please fill in all required fields."
       );
@@ -1735,49 +1490,31 @@ function PreRegistrationPage({
     }
 
     try {
-
       setSubmitting(true);
 
-      const visitDateTime =
-        new Date(
-          `${date}T${time}`
-        ).toISOString();
+      const visitDateTime = new Date(
+        `${date}T${time}`
+      ).toISOString();
 
-      const response =
-        await fetch(
-          "http://localhost:5000/api/visitors",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              visitorName:
-                name.trim(),
-
-              phone:
-                phone.trim(),
-
-              email:
-                email.trim(),
-
-              purpose:
-                purpose.trim(),
-
-              host:
-                host.trim(),
-
-              visitDateTime:
-                visitDateTime,
-
-              status:
-                "Pending",
-            }),
-          }
-        );
+      const response = await fetch(
+        "http://localhost:5000/api/visitors",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            visitorName: name.trim(),
+            phone: phone.trim(),
+            email: email.trim(),
+            purpose: purpose.trim(),
+            host: host.trim(),
+            visitDateTime,
+            status: "Pending",
+          }),
+        }
+      );
 
       const data =
         await response.json();
@@ -1788,7 +1525,6 @@ function PreRegistrationPage({
       );
 
       if (!response.ok) {
-
         console.error(
           "Failed to register visitor:",
           data
@@ -1802,63 +1538,34 @@ function PreRegistrationPage({
         return;
       }
 
-      /*
-        The backend successfully created
-        the visitor.
-
-        We send the created visitor back
-        to App.jsx.
-
-        IMPORTANT:
-        There is NO goTo() here.
-      */
-
       onSubmit({
-
-        id:
-          data._id,
-
-        name:
-          data.visitorName,
-
-        purpose:
-          data.purpose || "",
-
-        host:
-          data.host || "",
-
-        time:
-          data.visitDateTime
-            ? new Date(
-                data.visitDateTime
-              ).toLocaleTimeString(
-                "en-US",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              )
-            : "",
-
+        id: data._id,
+        name: data.visitorName,
+        purpose: data.purpose || "",
+        host: data.host || "",
+        time: data.visitDateTime
+          ? new Date(
+              data.visitDateTime
+            ).toLocaleTimeString(
+              "en-US",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )
+          : "",
         status:
-          data.status ===
-          "Checked-in"
+          data.status === "Checked-in"
             ? "Active"
-            : data.status ===
-              "Checked-out"
+            : data.status === "Checked-out"
             ? "Checked Out"
-            : data.status ===
-              "Approved"
+            : data.status === "Approved"
             ? "Active"
-            : data.status ===
-              "Rejected"
+            : data.status === "Rejected"
             ? "Rejected"
             : "Pending",
-
       });
-
     } catch (error) {
-
       console.error(
         "Failed to register visitor:",
         error
@@ -1867,48 +1574,47 @@ function PreRegistrationPage({
       alert(
         "Unable to connect to the backend."
       );
-
     } finally {
-
       setSubmitting(false);
-
     }
   };
 
   return (
     <div>
-
       <div style={styles.pageHeader}>
-
         <div>
+          <button
+            onClick={onBack}
+            style={styles.linkButton}
+          >
+            ← Back
+          </button>
 
           <h1 style={styles.heading}>
-            New Pre-Registration
+            Pre-Registration
           </h1>
 
           <p style={styles.subtitle}>
-            Register a visitor before their arrival.
+            Register a visitor in advance
           </p>
         </div>
       </div>
 
       <div style={styles.formCard}>
-
         <h2 style={styles.formTitle}>
           Visitor Information
         </h2>
 
         <div style={styles.formGrid}>
-
           <FormInput
-            label="VISITOR NAME *"
+            label="Visitor Name"
             value={name}
             onChange={setName}
             placeholder="Enter visitor name"
           />
 
           <FormInput
-            label="EMAIL *"
+            label="Email"
             value={email}
             onChange={setEmail}
             placeholder="Enter email"
@@ -1916,51 +1622,77 @@ function PreRegistrationPage({
           />
 
           <FormInput
-            label="PHONE NUMBER *"
+            label="Phone"
             value={phone}
             onChange={setPhone}
             placeholder="Enter phone number"
           />
 
           <FormInput
-            label="COMPANY / ORGANIZATION"
+            label="Company"
             value={company}
             onChange={setCompany}
-            placeholder="Enter company"
+            placeholder="Enter company name"
           />
 
-          <FormInput
-            label="HOST / EMPLOYEE *"
-            value={host}
-            onChange={setHost}
-            placeholder="Enter host name"
-          />
+          <div>
+            <label style={styles.label}>
+              Host Personnel *
+            </label>
+
+            <select
+              value={host}
+              onChange={(e) =>
+                setHost(e.target.value)
+              }
+              style={styles.input}
+              disabled={loadingHosts}
+            >
+              <option value="">
+                {loadingHosts
+                  ? "Loading hosts..."
+                  : hosts.length === 0
+                  ? "No hosts available"
+                  : "Select host"}
+              </option>
+
+              {hosts.map((item) => (
+                <option
+                  key={item._id}
+                  value={item.name}
+                >
+                  {item.name}
+                  {item.department
+                    ? ` - ${item.department}`
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <FormInput
-            label="PURPOSE OF VISIT *"
+            label="Purpose of Visit"
             value={purpose}
             onChange={setPurpose}
             placeholder="Enter purpose"
           />
 
           <FormInput
-            label="VISIT DATE *"
+            label="Visit Date"
             value={date}
             onChange={setDate}
             type="date"
           />
 
           <FormInput
-            label="VISIT TIME *"
+            label="Visit Time"
             value={time}
             onChange={setTime}
             type="time"
           />
-
         </div>
 
         <div style={styles.formButtons}>
-
           <button
             onClick={onBack}
             style={styles.cancelButton}
@@ -1972,35 +1704,34 @@ function PreRegistrationPage({
           <button
             onClick={submit}
             style={styles.registerButton}
-            disabled={submitting}
+            disabled={
+              submitting || loadingHosts
+            }
           >
             {submitting
               ? "Submitting..."
-              : "Submit Pre-Registration"}
+              : "Submit Registration"}
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
-/* =========================
+
+/* =====================================================
    SMALL COMPONENTS
-========================= */
+===================================================== */
 
 function StatCard({
   title,
   value,
-  icon,
   description,
+  icon,
 }) {
   return (
     <div style={styles.statCard}>
       <div style={styles.statTop}>
-
         <span style={styles.statTitle}>
           {title}
         </span>
@@ -2008,56 +1739,56 @@ function StatCard({
         <span style={styles.statIcon}>
           {icon}
         </span>
-
       </div>
 
-        <div style={styles.statIcon}>{icon}</div>
+      <div style={styles.statValue}>
+        {value}
       </div>
 
       <div style={styles.statDescription}>
         {description}
       </div>
-
     </div>
   );
 }
 
-function StatusBadge({ status }) {
 
-  let style =
-    styles.activeBadge;
+function StatusBadge({ status }) {
+  let style = styles.activeBadge;
 
   if (
     status === "Pending" ||
     status === "Warning"
   ) {
-    style =
-      styles.pendingBadge;
+    style = styles.pendingBadge;
   }
 
-  if (
-    status === "Checked Out"
-  ) {
-    style =
-      styles.checkedOutBadge;
+  if (status === "Checked Out") {
+    style = styles.checkedOutBadge;
   }
 
   return (
-    <span style={{ ...styles.statusBadge, ...badgeStyle }}>
+    <span
+      style={{
+        ...styles.badge,
+        ...style,
+      }}
+    >
       {status}
     </span>
   );
 }
 
+
 function SettingRow({
   title,
   description,
-  value,
+  checked,
+  onChange,
 }) {
   return (
     <div style={styles.settingRow}>
       <div>
-
         <div style={styles.settingTitle}>
           {title}
         </div>
@@ -2068,16 +1799,22 @@ function SettingRow({
       </div>
 
       <button
-        onClick={onChange}
+        onClick={() =>
+          onChange(!checked)
+        }
         style={{
           ...styles.toggle,
-          ...(value ? styles.toggleOn : styles.toggleOff),
+          ...(checked
+            ? styles.toggleOn
+            : styles.toggleOff),
         }}
       >
         <span
           style={{
             ...styles.toggleCircle,
-            ...(value ? styles.toggleCircleOn : {}),
+            ...(checked
+              ? styles.circleOn
+              : styles.circleOff),
           }}
         />
       </button>
@@ -2085,9 +1822,9 @@ function SettingRow({
   );
 }
 
+
 function FormInput({
   label,
-  name,
   value,
   onChange,
   placeholder,
@@ -2095,77 +1832,66 @@ function FormInput({
 }) {
   return (
     <div>
-
       <label style={styles.label}>
         {label}
       </label>
 
       <input
         type={type}
-        name={name}
         value={value}
         onChange={(e) =>
-          onChange(
-            e.target.value
-          )
+          onChange(e.target.value)
         }
         placeholder={placeholder}
-        style={styles.formInput}
+        style={styles.input}
       />
     </div>
   );
 }
 
-/* =========================
-   DOWNLOAD
-========================= */
 
-function downloadFile(
-  content,
-  filename
-) {
-
-  const blob = new Blob(
-    [content],
-    {
-      type:
-        "text/csv;charset=utf-8;",
-    }
-  );
+function downloadFile(content, filename) {
+  const blob = new Blob([content], {
+    type: "text/csv;charset=utf-8;",
+  });
 
   const url =
     URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
+  const link =
+    document.createElement("a");
+
   link.href = url;
-  link.download = fileName;
+  link.download = filename;
+
   document.body.appendChild(link);
   link.click();
+
   document.body.removeChild(link);
 
   URL.revokeObjectURL(url);
 }
 
-/* =========================
+
+/* =====================================================
    STYLES
-========================= */
+===================================================== */
 
 const styles = {
   app: {
     minHeight: "100vh",
     display: "flex",
-    background: "#F8FAFC",
+    background: "#f5f5f5",
     fontFamily:
       "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    color: "#1E293B",
+    color: "#171717",
   },
 
   sidebar: {
-    width: "250px",
+    width: "240px",
     minHeight: "100vh",
     background: "#ffffff",
-    borderRight:
-      "1px solid #e5e7eb",
+    borderRight: "1px solid #e5e7eb",
     flexShrink: 0,
   },
 
@@ -2174,17 +1900,21 @@ const styles = {
     display: "flex",
     alignItems: "center",
     padding: "0 24px",
-    borderBottom:
-      "1px solid #e5e7eb",
+    borderBottom: "1px solid #e5e7eb",
   },
 
-  logoImage: {
-    width: "34px",
-    height: "34px",
-    objectFit: "contain",
-    display: "block",
+  logoBox: {
+    width: "28px",
+    height: "28px",
+    background: "#171717",
+    color: "#ffffff",
+    borderRadius: "4px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "12px",
+    fontWeight: "700",
     marginRight: "10px",
-    background: "transparent",
   },
 
   logoImage: {
@@ -2195,130 +1925,83 @@ const styles = {
   },
 
   logoText: {
-    fontSize: "15px",
-    fontWeight: "800",
-    letterSpacing: "0.7px",
-    color: "#1E293B",
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "0.4px",
   },
 
-  nav: {
-    padding: "20px 14px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "5px",
+  sidebarContent: {
+    padding: "18px 12px",
   },
 
-  navItem: {
+  sectionTitle: {
+    fontSize: "9px",
+    fontWeight: "700",
+    color: "#9ca3af",
+    letterSpacing: "1px",
+    margin:
+      "0 0 8px 10px",
+  },
+
+  navButton: {
     width: "100%",
     border: "none",
     background: "transparent",
-    color: "#64748B",
-    padding: "12px 14px",
-    borderRadius: "8px",
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    fontSize: "14px",
-    fontWeight: "500",
+    padding: "10px 12px",
+    marginBottom: "2px",
+    borderRadius: "6px",
+    color: "#6b7280",
+    fontSize: "13px",
     cursor: "pointer",
     textAlign: "left",
   },
 
-  navItemActive: {
-    background: "#EFF6FF",
-    color: "#2563EB",
+  activeNav: {
+    background: "#e5e5e7",
+    color: "#171717",
     fontWeight: "600",
   },
 
   navIcon: {
-    width: "20px",
+    width: "16px",
     textAlign: "center",
-    fontSize: "16px",
+    fontSize: "14px",
   },
 
-  sidebarBottom: {
-    marginTop: "auto",
-    padding: "16px",
+  mainArea: {
+    flex: 1,
+    minWidth: 0,
   },
 
-  securityCard: {
-    background: "#F8FAFC",
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
-    padding: "12px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-
-  securityIcon: {
-    width: "30px",
-    height: "30px",
-    borderRadius: "50%",
-    background: "#DCFCE7",
-    color: "#16A34A",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-  },
-
-  securityTitle: {
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#1E293B",
-  },
-
-  securityText: {
-    fontSize: "10px",
-    color: "#64748B",
-    marginTop: "2px",
-  },
-
-  main: {
-    marginLeft: "250px",
-    width: "calc(100% - 250px)",
-    minHeight: "100vh",
-  },
-
-  topbar: {
+  navbar: {
     height: "64px",
-    background: "#FFFFFF",
-    borderBottom: "1px solid #E2E8F0",
+    background: "#ffffff",
+    borderBottom:
+      "1px solid #e5e7eb",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 30px",
-  },
-
-  pageTitle: {
-    margin: 0,
-    fontSize: "18px",
-    fontWeight: "700",
-  },
-
-  pageSubtitle: {
-    margin: "2px 0 0",
-    fontSize: "11px",
-    color: "#94A3B8",
-  },
-
-  topbarRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "18px",
+    justifyContent:
+      "space-between",
+    padding: "0 28px",
   },
 
   searchBox: {
-    width: "230px",
-    height: "36px",
-    border: "1px solid #E2E8F0",
-    borderRadius: "7px",
+    width: "310px",
+    height: "34px",
+    border:
+      "1px solid #dcdfe4",
+    borderRadius: "6px",
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    padding: "0 11px",
-    background: "#FFFFFF",
+    padding: "0 10px",
+  },
+
+  searchIcon: {
+    color: "#9ca3af",
   },
 
   searchInput: {
@@ -2326,86 +2009,79 @@ const styles = {
     outline: "none",
     width: "100%",
     fontSize: "12px",
-    color: "#1E293B",
   },
 
-  notification: {
-    fontSize: "20px",
-    color: "#64748B",
-    cursor: "pointer",
-  },
-
-  profile: {
+  userArea: {
     display: "flex",
     alignItems: "center",
     gap: "9px",
   },
 
-  profileAvatar: {
-    width: "34px",
-    height: "34px",
+  notification: {
+    width: "32px",
+    height: "32px",
     borderRadius: "50%",
-    background: "#DBEAFE",
-    color: "#2563EB",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-    fontSize: "13px",
-  },
-
-  profileName: {
-    fontSize: "12px",
-    fontWeight: "700",
-  },
-
-  profileRole: {
-    fontSize: "10px",
-    color: "#64748B",
-    marginTop: "2px",
-  },
-
-  content: {
-    padding: "30px",
-  },
-
-  dashboardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "24px",
-  },
-
-  heading: {
-    margin: 0,
-    fontSize: "24px",
-    fontWeight: "700",
-    color: "#1E293B",
-  },
-
-  description: {
-    margin: "6px 0 0",
-    fontSize: "13px",
-    color: "#64748B",
-  },
-
-  primaryButton: {
-    border: "none",
-    background: "#2563EB",
-    color: "#FFFFFF",
-    padding: "11px 17px",
-    borderRadius: "7px",
-    fontSize: "12px",
-    fontWeight: "600",
+    border:
+      "1px solid #d1d5db",
+    background: "#ffffff",
     cursor: "pointer",
   },
 
-  secondaryButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#475569",
-    padding: "8px 13px",
-    borderRadius: "6px",
+  avatar: {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    background: "#e5e7eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "10px",
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+
+  adminName: {
+    fontSize: "11px",
+    fontWeight: "700",
+  },
+
+  adminRole: {
+    fontSize: "9px",
+    color: "#9ca3af",
+  },
+
+  content: {
+    padding: "26px 24px",
+    maxWidth: "1200px",
+    margin: "0 auto",
+  },
+
+  pageHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent:
+      "space-between",
+    marginBottom: "18px",
+  },
+
+  heading: {
+    fontSize: "21px",
+    margin: 0,
+    fontWeight: "700",
+  },
+
+  subtitle: {
+    margin: "4px 0 0",
+    fontSize: "11px",
+    color: "#8a8f98",
+  },
+
+  registerButton: {
+    background: "#242424",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "5px",
+    padding: "10px 15px",
     fontSize: "11px",
     fontWeight: "600",
     cursor: "pointer",
@@ -2413,278 +2089,311 @@ const styles = {
 
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "16px",
-    marginBottom: "22px",
+    gridTemplateColumns:
+      "repeat(4, 1fr)",
+    gap: "12px",
+    marginBottom: "18px",
   },
 
   statCard: {
-    background: "#FFFFFF",
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
-    padding: "18px",
+    background: "#ffffff",
+    border:
+      "1px solid #dedfe2",
+    borderRadius: "7px",
+    padding: "14px",
+    minHeight: "88px",
   },
 
   statTop: {
     display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
+    justifyContent:
+      "space-between",
   },
 
   statTitle: {
-    margin: 0,
-    fontSize: "11px",
-    color: "#64748B",
-    fontWeight: "600",
-  },
-
-  statValue: {
-    margin: "7px 0 0",
-    fontSize: "25px",
-    fontWeight: "700",
-    color: "#1E293B",
+    fontSize: "10px",
+    color: "#666b73",
   },
 
   statIcon: {
-    width: "38px",
-    height: "38px",
-    borderRadius: "8px",
-    background: "#EFF6FF",
-    color: "#2563EB",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "17px",
+    color: "#9ca3af",
+  },
+
+  statValue: {
+    fontSize: "22px",
+    fontWeight: "700",
+    marginTop: "8px",
   },
 
   statDescription: {
-    margin: "13px 0 0",
-    fontSize: "10px",
-    color: "#94A3B8",
+    fontSize: "9px",
+    color: "#a4a8ae",
+    marginTop: "2px",
   },
 
-  card: {
-    background: "#FFFFFF",
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
+  tableCard: {
+    background: "#ffffff",
+    border:
+      "1px solid #dedfe2",
+    borderRadius: "7px",
     overflow: "hidden",
+    marginBottom: "18px",
   },
 
-  cardHeader: {
-    padding: "18px 20px",
+  tableHeader: {
+    minHeight: "54px",
     display: "flex",
+    justifyContent:
+      "space-between",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderBottom: "1px solid #E2E8F0",
+    padding: "0 14px",
+    borderBottom:
+      "1px solid #e5e7eb",
   },
 
-  cardTitle: {
+  tableTitle: {
+    fontSize: "12px",
     margin: 0,
-    fontSize: "14px",
     fontWeight: "700",
   },
 
   tableSubtitle: {
     fontSize: "9px",
     color: "#9ca3af",
-    margin:
-      "3px 0 0",
+    margin: "3px 0 0",
   },
 
-  cardSubtitle: {
-    margin: "4px 0 0",
-    fontSize: "10px",
-    color: "#94A3B8",
+  tableActions: {
+    display: "flex",
+    gap: "7px",
+    alignItems: "center",
   },
 
-  tableWrapper: {
-    overflowX: "auto",
+  smallButton: {
+    border:
+      "1px solid #dfe1e5",
+    background: "#ffffff",
+    borderRadius: "4px",
+    padding: "7px 10px",
+    fontSize: "9px",
+    color: "#555",
+    cursor: "pointer",
+  },
+
+  smallInput: {
+    height: "30px",
+    width: "150px",
+    border:
+      "1px solid #dfe1e5",
+    borderRadius: "4px",
+    padding: "0 8px",
+    outline: "none",
+    fontSize: "9px",
+  },
+
+  smallSelect: {
+    height: "30px",
+    border:
+      "1px solid #dfe1e5",
+    borderRadius: "4px",
+    padding: "0 8px",
+    background: "#ffffff",
+    fontSize: "9px",
   },
 
   table: {
     width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "11px",
+    borderCollapse:
+      "collapse",
   },
 
   th: {
-    background: "#F8FAFC",
-    color: "#64748B",
-    fontSize: "10px",
-    fontWeight: "700",
     textAlign: "left",
-    padding: "12px 14px",
-    borderBottom: "1px solid #E2E8F0",
+    padding: "10px 13px",
+    fontSize: "9px",
+    color: "#777c84",
+    background: "#fafafa",
+    fontWeight: "600",
+    borderBottom:
+      "1px solid #e5e7eb",
     whiteSpace: "nowrap",
   },
 
   td: {
-    padding: "13px 14px",
-    borderBottom: "1px solid #F1F5F9",
-    color: "#475569",
+    padding: "11px 13px",
+    fontSize: "10px",
+    color: "#6b7280",
+    borderBottom:
+      "1px solid #e5e7eb",
     whiteSpace: "nowrap",
   },
 
-  visitorCell: {
+  visitorName: {
     display: "flex",
     alignItems: "center",
-    gap: "9px",
-    color: "#1E293B",
+    gap: "8px",
+    color: "#222222",
+    fontWeight: "500",
   },
 
-  avatar: {
-    width: "28px",
-    height: "28px",
+  initial: {
+    width: "24px",
+    height: "24px",
     borderRadius: "50%",
-    background: "#DBEAFE",
-    color: "#2563EB",
-    display: "flex",
+    background: "#e5e7eb",
+    display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "10px",
-    fontWeight: "700",
-  },
-
-  statusBadge: {
-    display: "inline-block",
-    padding: "4px 8px",
-    borderRadius: "20px",
     fontSize: "9px",
-    fontWeight: "700",
+    color: "#6b7280",
+    fontWeight: "600",
   },
 
-  statusGreen: {
-    background: "#DCFCE7",
-    color: "#15803D",
+  badge: {
+    padding: "4px 8px",
+    borderRadius: "4px",
+    fontSize: "8px",
+    fontWeight: "600",
   },
 
-  statusBlue: {
-    background: "#DBEAFE",
-    color: "#1D4ED8",
+  activeBadge: {
+    background: "#262626",
+    color: "#ffffff",
   },
 
-  statusGray: {
-    background: "#F1F5F9",
-    color: "#64748B",
+  pendingBadge: {
+    background: "#fff7ed",
+    color: "#9a3412",
   },
 
-  statusYellow: {
-    background: "#FEF3C7",
-    color: "#B45309",
+  checkedOutBadge: {
+    background: "#f1f1f1",
+    color: "#6b7280",
+  },
+
+  linkButton: {
+    border: "none",
+    background: "transparent",
+    textDecoration:
+      "underline",
+    fontSize: "9px",
+    cursor: "pointer",
+    marginRight: "10px",
+    color: "#333333",
   },
 
   checkoutButton: {
     border: "none",
-    background: "#EFF6FF",
-    color: "#2563EB",
-    padding: "6px 9px",
-    borderRadius: "5px",
+    background: "transparent",
     fontSize: "9px",
-    fontWeight: "600",
     cursor: "pointer",
-  },
-
-  completedText: {
-    color: "#94A3B8",
-    fontSize: "10px",
-  },
-
-  recordCount: {
-    background: "#F1F5F9",
-    color: "#64748B",
-    padding: "6px 10px",
-    borderRadius: "5px",
-    fontSize: "10px",
-    fontWeight: "600",
-  },
-
-  emptyState: {
-    padding: "40px",
-    textAlign: "center",
-    color: "#94A3B8",
-    fontSize: "13px",
+    color: "#777777",
   },
 
   formCard: {
-    background: "#FFFFFF",
-    border: "1px solid #E2E8F0",
-    borderRadius: "10px",
-    padding: "25px",
+    background: "#ffffff",
+    border:
+      "1px solid #dedfe2",
+    borderRadius: "7px",
+    padding: "20px",
+    marginBottom: "18px",
+  },
+
+  formTitle: {
+    margin: "0 0 5px",
+    fontSize: "14px",
+    fontWeight: "700",
   },
 
   formGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "20px",
+    gridTemplateColumns:
+      "1fr 1fr",
+    gap: "15px",
+    marginTop: "20px",
   },
 
-  formGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-  },
-
-  formLabel: {
-    fontSize: "11px",
-    fontWeight: "600",
-    color: "#475569",
-  },
-
-  formInput: {
+  input: {
+    width: "100%",
     height: "38px",
-    border: "1px solid #CBD5E1",
-    borderRadius: "6px",
+    boxSizing: "border-box",
+    border:
+      "1px solid #d1d5db",
+    borderRadius: "5px",
     padding: "0 11px",
     outline: "none",
-    fontSize: "12px",
-    color: "#1E293B",
-    boxSizing: "border-box",
+    fontSize: "10px",
+    background: "#ffffff",
   },
 
-  formActions: {
-    marginTop: "25px",
+  label: {
+    display: "block",
+    fontSize: "9px",
+    fontWeight: "600",
+    color: "#6b7280",
+    marginBottom: "6px",
+  },
+
+  reportControls: {
+    display: "grid",
+    gridTemplateColumns:
+      "1fr 1fr auto",
+    gap: "15px",
+    alignItems: "end",
+    marginTop: "20px",
+  },
+
+  controlGroup: {
+    minWidth: 0,
+  },
+
+  formButtons: {
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent:
+      "flex-end",
+    gap: "10px",
+    marginTop: "20px",
+  },
+
+  cancelButton: {
+    border:
+      "1px solid #d1d5db",
+    background: "#ffffff",
+    borderRadius: "5px",
+    padding: "10px 15px",
+    fontSize: "10px",
+    cursor: "pointer",
   },
 
   settingsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "20px",
-  },
-
-  settingsList: {
-    marginTop: "20px",
+    gridTemplateColumns:
+      "1fr 1fr",
+    gap: "18px",
   },
 
   settingRow: {
-    padding: "16px 0",
-    borderTop: "1px solid #F1F5F9",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: "20px",
+    justifyContent:
+      "space-between",
+    padding:
+      "16px 0",
+    borderBottom:
+      "1px solid #eeeeee",
+    gap: "15px",
   },
 
   settingTitle: {
-    fontSize: "12px",
+    fontSize: "11px",
     fontWeight: "600",
-    color: "#1E293B",
+    color: "#222",
   },
 
   settingDescription: {
+    fontSize: "9px",
+    color: "#9ca3af",
     marginTop: "4px",
-    fontSize: "10px",
-    color: "#94A3B8",
-  },
-
-  settingValue: {
-    fontSize: "10px",
-    fontWeight: "600",
-    color: "#2563EB",
-    background: "#EFF6FF",
-    padding: "5px 9px",
-    borderRadius: "5px",
   },
 
   toggle: {
@@ -2692,30 +2401,56 @@ const styles = {
     height: "22px",
     border: "none",
     borderRadius: "20px",
-    padding: "2px",
-    cursor: "pointer",
     position: "relative",
+    cursor: "pointer",
+    flexShrink: 0,
   },
 
   toggleOn: {
-    background: "#2563EB",
+    background: "#242424",
   },
 
   toggleOff: {
-    background: "#CBD5E1",
+    background: "#d1d5db",
   },
 
   toggleCircle: {
-    width: "18px",
-    height: "18px",
+    position: "absolute",
+    top: "3px",
+    width: "16px",
+    height: "16px",
+    background: "#ffffff",
     borderRadius: "50%",
-    background: "#FFFFFF",
-    display: "block",
-    transition: "0.2s",
   },
 
-  toggleCircleOn: {
-    marginLeft: "18px",
+  circleOn: {
+    right: "3px",
+  },
+
+  circleOff: {
+    left: "3px",
+  },
+
+  infoRow: {
+    display: "flex",
+    justifyContent:
+      "space-between",
+    padding: "12px 0",
+    borderBottom:
+      "1px solid #eeeeee",
+    fontSize: "10px",
+    color: "#6b7280",
+  },
+
+  successMessage: {
+    background: "#f0fdf4",
+    color: "#166534",
+    border:
+      "1px solid #bbf7d0",
+    borderRadius: "5px",
+    padding: "10px 14px",
+    fontSize: "10px",
+    marginBottom: "18px",
   },
 };
 
