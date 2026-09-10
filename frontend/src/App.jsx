@@ -1,106 +1,69 @@
-import { useEffect, useState } from "react";
-
+import { useState } from "react";
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
-
-  // Visitors are loaded from backend
-  const [visitors, setVisitors] = useState([]);
-
-  // Load visitors from backend
-  useEffect(() => {
-    const fetchVisitors = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/visitors"
-        );
-
-        const data = await response.json();
-
-        console.log("APP VISITORS FROM BACKEND:", data);
-
-        if (!response.ok) {
-          console.error("Failed to fetch visitors:", data);
-          return;
-        }
-
-        const formattedVisitors = data
-          .filter((visitor) => visitor.visitorName)
-          .map((visitor) => ({
-            id: visitor._id,
-            name: visitor.visitorName,
-            purpose: visitor.purpose || "",
-            host: visitor.host || "",
-            time: visitor.visitDateTime
-              ? new Date(
-                  visitor.visitDateTime
-                ).toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "",
-            status:
-              visitor.status === "Checked-in"
-                ? "Active"
-                : visitor.status === "Checked-out"
-                ? "Checked Out"
-                : visitor.status === "Approved"
-                ? "Active"
-                : visitor.status === "Rejected"
-                ? "Rejected"
-                : "Pending",
-          }));
-
-        setVisitors(formattedVisitors);
-      } catch (error) {
-        console.error(
-          "Failed to fetch visitors:",
-          error
-        );
-      }
-    };
-
-    fetchVisitors();
-  }, []);
-
   const [search, setSearch] = useState("");
 
+  const [visitors, setVisitors] = useState([
+    {
+      name: "Sarang Mahajan",
+      company: "Tech Solutions",
+      host: "Admin",
+      purpose: "Meeting",
+      checkIn: "09:15 AM",
+      checkOut: "-",
+      status: "Checked In",
+    },
+    {
+      name: "Smith Wagh",
+      company: "Wagh Enterprises",
+      host: "HR Department",
+      purpose: "Interview",
+      checkIn: "10:05 AM",
+      checkOut: "-",
+      status: "Checked In",
+    },
+    {
+      name: "Eera Sabnis",
+      company: "Sabnis Technologies",
+      host: "IT Department",
+      purpose: "Project Discussion",
+      checkIn: "10:45 AM",
+      checkOut: "12:15 PM",
+      status: "Checked Out",
+    },
+    {
+      name: "Maya Desmukh",
+      company: "Desmukh Industries",
+      host: "Manager",
+      purpose: "Business Meeting",
+      checkIn: "11:20 AM",
+      checkOut: "-",
+      status: "Checked In",
+    },
+    {
+      name: "Ramish Pandit",
+      company: "Pandit Associates",
+      host: "Finance",
+      purpose: "Document Submission",
+      checkIn: "12:00 PM",
+      checkOut: "-",
+      status: "Checked In",
+    },
+  ]);
+
   const navItems = [
-    "Dashboard",
-    "Visitors",
-    "Security Logs",
-    "Reports",
-    "System Settings",
+    { name: "Dashboard", icon: "▦" },
+    { name: "Hosts", icon: "👤" },
+    { name: "Visitors", icon: "👥" },
+    { name: "Security Logs", icon: "▤" },
+    { name: "Reports", icon: "▥" },
+    { name: "Add Visitor", icon: "＋" },
+    { name: "Settings", icon: "⚙" },
   ];
 
   const goTo = (page) => {
     setActivePage(page);
-  };
-
-  const exportCSV = () => {
-    const csv =
-      "Visitor Name,Purpose,Host,Time,Status\n" +
-      visitors
-        .map(
-          (v) =>
-            `"${v.name}","${v.purpose}","${v.host}","${v.time}","${v.status}"`
-        )
-        .join("\n");
-
-    const blob = new Blob([csv], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "visitor-report.csv";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
+    setSearch("");
   };
 
   const checkOut = (index) => {
@@ -109,6 +72,7 @@ function App() {
         i === index
           ? {
               ...visitor,
+              checkOut: "Now",
               status: "Checked Out",
             }
           : visitor
@@ -117,2125 +81,1008 @@ function App() {
   };
 
   const filteredVisitors = visitors.filter((visitor) => {
-    const value =
-      `${visitor.name} ${visitor.purpose} ${visitor.host}`.toLowerCase();
+    const text = search.toLowerCase();
 
-    return value.includes(search.toLowerCase());
+    return (
+      visitor.name.toLowerCase().includes(text) ||
+      visitor.company.toLowerCase().includes(text) ||
+      visitor.host.toLowerCase().includes(text) ||
+      visitor.purpose.toLowerCase().includes(text)
+    );
   });
+
+  const totalVisitors = visitors.length;
+  const checkedIn = visitors.filter(
+    (visitor) => visitor.status === "Checked In"
+  ).length;
+  const checkedOut = visitors.filter(
+    (visitor) => visitor.status === "Checked Out"
+  ).length;
 
   return (
     <div style={styles.app}>
-
-      {/* ================= SIDEBAR ================= */}
-
+      {/* SIDEBAR */}
       <aside style={styles.sidebar}>
-
         <div style={styles.logoArea}>
-          <div style={styles.logoBox}>S</div>
-
-          <span style={styles.logoText}>
-            SECURE-PASS
-          </span>
+          <img
+            src="/visitra-logo.png"
+            alt="VISITRA Logo"
+            style={styles.logoImage}
+          />
+          <span style={styles.logoText}>VISITRA</span>
         </div>
 
-        <div style={styles.sidebarContent}>
-
-          <p style={styles.sectionTitle}>
-            NAVIGATION
-          </p>
-
+        <nav style={styles.nav}>
           {navItems.map((item) => (
             <button
-              key={item}
-              onClick={() => goTo(item)}
+              key={item.name}
+              onClick={() => goTo(item.name)}
               style={{
-                ...styles.navButton,
-                ...(activePage === item
-                  ? styles.activeNav
+                ...styles.navItem,
+                ...(activePage === item.name
+                  ? styles.navItemActive
                   : {}),
               }}
             >
-              <span style={styles.navIcon}>
-                {item === "Dashboard" && "▣"}
-                {item === "Visitors" && "♙"}
-                {item === "Security Logs" && "⊗"}
-                {item === "Reports" && "▤"}
-                {item === "System Settings" && "⚙"}
-              </span>
-
-              {item}
+              <span style={styles.navIcon}>{item.icon}</span>
+              <span>{item.name}</span>
             </button>
           ))}
+        </nav>
 
-          <p
-            style={{
-              ...styles.sectionTitle,
-              marginTop: "35px",
-            }}
-          >
-            QUICK ACTIONS
-          </p>
-
-          <button
-            onClick={() =>
-              goTo("Pre-Registration")
-            }
-            style={{
-              ...styles.navButton,
-              ...(activePage === "Pre-Registration"
-                ? styles.activeNav
-                : {}),
-            }}
-          >
-            <span style={styles.navIcon}>
-              ⊕
-            </span>
-
-            New Pre-Registration
-          </button>
-
-          <button
-            onClick={() =>
-              alert("Temporary pass feature opened.")
-            }
-            style={styles.navButton}
-          >
-            <span style={styles.navIcon}>
-              ♙
-            </span>
-
-            Issue Temp Pass
-          </button>
-
+        <div style={styles.sidebarBottom}>
+          <div style={styles.securityCard}>
+            <div style={styles.securityIcon}>✓</div>
+            <div>
+              <div style={styles.securityTitle}>System Secure</div>
+              <div style={styles.securityText}>All systems operational</div>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* ================= MAIN AREA ================= */}
-
-      <div style={styles.mainArea}>
-
-        {/* ================= NAVBAR ================= */}
-
-        <header style={styles.navbar}>
-
-          <div style={styles.searchBox}>
-
-            <span style={styles.searchIcon}>
-              ⌕
-            </span>
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search visitors, hosts, logs..."
-              style={styles.searchInput}
-            />
-
+      {/* MAIN */}
+      <main style={styles.main}>
+        {/* TOPBAR */}
+        <header style={styles.topbar}>
+          <div>
+            <h2 style={styles.pageTitle}>{activePage}</h2>
+            <p style={styles.pageSubtitle}>
+              Visitor & Security Management System
+            </p>
           </div>
 
-          <div style={styles.userArea}>
-
-            <button
-              onClick={() =>
-                alert("No new notifications.")
-              }
-              style={styles.notification}
-            >
-              ♧
-            </button>
-
-            <div style={styles.avatar}>
-              AD
+          <div style={styles.topbarRight}>
+            <div style={styles.searchBox}>
+              <span>⌕</span>
+              <input
+                type="text"
+                placeholder="Search visitors..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={styles.searchInput}
+              />
             </div>
 
-            <div>
+            <div style={styles.notification}>♢</div>
 
-              <div style={styles.adminName}>
-                Admin User
+            <div style={styles.profile}>
+              <div style={styles.profileAvatar}>A</div>
+              <div>
+                <div style={styles.profileName}>Admin</div>
+                <div style={styles.profileRole}>Administrator</div>
               </div>
-
-              <div style={styles.adminRole}>
-                Command Center
-              </div>
-
             </div>
-
           </div>
-
         </header>
 
-        {/* ================= CONTENT ================= */}
-
-        <main style={styles.content}>
-
-          {/* ================= DASHBOARD ================= */}
-
+        {/* PAGE CONTENT */}
+        <div style={styles.content}>
           {activePage === "Dashboard" && (
-            <>
-
-              <div style={styles.pageHeader}>
-
-                <div>
-
-                  <h1 style={styles.heading}>
-                    Dashboard Overview
-                  </h1>
-
-                  <p style={styles.subtitle}>
-                    Real-time monitoring of campus
-                    visitors and security logs.
-                  </p>
-
-                </div>
-
-                <button
-                  onClick={() =>
-                    goTo("Pre-Registration")
-                  }
-                  style={styles.registerButton}
-                >
-                  ⊕ &nbsp; Register New Visitor
-                </button>
-
-              </div>
-
-              <div style={styles.statsGrid}>
-
-                <StatCard
-                  title="Total Visitors Today"
-                  value={visitors.length}
-                  description="Visitors loaded from database"
-                  icon="♙"
-                />
-
-                <StatCard
-                  title="Checked In"
-                  value={
-                    visitors.filter(
-                      (v) =>
-                        v.status === "Active"
-                    ).length
-                  }
-                  description="Currently on-site"
-                  icon="⇥"
-                />
-
-                <StatCard
-                  title="Checked Out"
-                  value={
-                    visitors.filter(
-                      (v) =>
-                        v.status === "Checked Out"
-                    ).length
-                  }
-                  description="Completed visits"
-                  icon="⇥"
-                />
-
-                <StatCard
-                  title="Pending Approvals"
-                  value={
-                    visitors.filter(
-                      (v) =>
-                        v.status === "Pending"
-                    ).length
-                  }
-                  description="Awaiting host confirmation"
-                  icon="◷"
-                />
-
-              </div>
-
-              <div style={styles.tableCard}>
-
-                <div style={styles.tableHeader}>
-
-                  <div>
-
-                    <h2 style={styles.tableTitle}>
-                      Recent Visitors Log
-                    </h2>
-
-                    <p style={styles.tableSubtitle}>
-                      Live feed of entries and exits
-                      in past 12 hours
-                    </p>
-
-                  </div>
-
-                  <div style={styles.tableActions}>
-
-                    <button
-                      onClick={() =>
-                        alert(
-                          "Filter options opened."
-                        )
-                      }
-                      style={styles.smallButton}
-                    >
-                      Filter Log
-                    </button>
-
-                    <button
-                      onClick={exportCSV}
-                      style={styles.smallButton}
-                    >
-                      Export CSV
-                    </button>
-
-                  </div>
-
-                </div>
-
-                <div
-                  style={{
-                    overflowX: "auto",
-                  }}
-                >
-
-                  <table style={styles.table}>
-
-                    <thead>
-
-                      <tr>
-
-                        <th style={styles.th}>
-                          Visitor Name
-                        </th>
-
-                        <th style={styles.th}>
-                          Purpose of Visit
-                        </th>
-
-                        <th style={styles.th}>
-                          Host Personnel
-                        </th>
-
-                        <th style={styles.th}>
-                          Check-in Time
-                        </th>
-
-                        <th style={styles.th}>
-                          Status
-                        </th>
-
-                        <th style={styles.th}>
-                          Actions
-                        </th>
-
-                      </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                      {filteredVisitors.map(
-                        (visitor, index) => (
-
-                          <tr
-                            key={
-                              visitor.id ||
-                              index
-                            }
-                          >
-
-                            <td style={styles.td}>
-
-                              <div
-                                style={
-                                  styles.visitorName
-                                }
-                              >
-
-                                <span
-                                  style={
-                                    styles.initial
-                                  }
-                                >
-                                  {visitor.name.charAt(
-                                    0
-                                  )}
-                                </span>
-
-                                {visitor.name}
-
-                              </div>
-
-                            </td>
-
-                            <td style={styles.td}>
-                              {visitor.purpose}
-                            </td>
-
-                            <td style={styles.td}>
-                              {visitor.host}
-                            </td>
-
-                            <td style={styles.td}>
-                              {visitor.time}
-                            </td>
-
-                            <td style={styles.td}>
-
-                              <StatusBadge
-                                status={
-                                  visitor.status
-                                }
-                              />
-
-                            </td>
-
-                            <td style={styles.td}>
-
-                              <button
-                                onClick={() =>
-                                  alert(
-                                    `Viewing ${visitor.name}`
-                                  )
-                                }
-                                style={
-                                  styles.linkButton
-                                }
-                              >
-                                View Profile
-                              </button>
-
-                              {visitor.status !==
-                                "Checked Out" && (
-
-                                <button
-                                  onClick={() =>
-                                    checkOut(index)
-                                  }
-                                  style={
-                                    styles.checkoutButton
-                                  }
-                                >
-                                  Check Out
-                                </button>
-
-                              )}
-
-                            </td>
-
-                          </tr>
-
-                        )
-                      )}
-
-                    </tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-            </>
+            <Dashboard
+              visitors={visitors}
+              totalVisitors={totalVisitors}
+              checkedIn={checkedIn}
+              checkedOut={checkedOut}
+              goTo={goTo}
+            />
           )}
 
-          {/* ================= VISITORS ================= */}
+          {activePage === "Hosts" && <Hosts />}
 
           {activePage === "Visitors" && (
             <VisitorsPage
               visitors={filteredVisitors}
-              onRegister={() =>
-                goTo("Pre-Registration")
-              }
-              onCheckOut={checkOut}
+              allVisitors={visitors}
+              search={search}
+              checkOut={checkOut}
+              goTo={goTo}
             />
           )}
-
-          {/* ================= SECURITY LOGS ================= */}
 
           {activePage === "Security Logs" && (
-            <SecurityLogsPage />
+            <SecurityLogs visitors={visitors} />
           )}
-
-          {/* ================= REPORTS ================= */}
 
           {activePage === "Reports" && (
-            <ReportsPage
-              visitors={visitors}
-            />
+            <Reports visitors={visitors} />
           )}
 
-          {/* ================= SETTINGS ================= */}
-
-          {activePage === "System Settings" && (
-            <SettingsPage />
+          {activePage === "Add Visitor" && (
+            <PreRegistration />
           )}
 
-          {/* ================= PRE REGISTRATION ================= */}
-
-          {activePage === "Pre-Registration" && (
-            <PreRegistrationPage
-              onBack={() =>
-                goTo("Dashboard")
-              }
-              onSubmit={(newVisitor) => {
-
-                setVisitors((current) => [
-                  ...current,
-                  newVisitor,
-                ]);
-
-                alert(
-                  "Pre-registration submitted successfully!"
-                );
-
-                goTo("Visitors");
-
-              }}
-            />
-          )}
-
-        </main>
-
-      </div>
-
+          {activePage === "Settings" && <Settings />}
+        </div>
+      </main>
     </div>
   );
 }
 
+/* =========================
+   DASHBOARD
+========================= */
 
-/* =====================================================
-   VISITORS PAGE
-===================================================== */
-
-function VisitorsPage({
+function Dashboard({
   visitors,
-  onRegister,
-  onCheckOut,
+  totalVisitors,
+  checkedIn,
+  checkedOut,
+  goTo,
 }) {
   return (
     <div>
-
-      <div style={styles.pageHeader}>
-
+      <div style={styles.dashboardHeader}>
         <div>
-
-          <h1 style={styles.heading}>
-            Visitors
-          </h1>
-
-          <p style={styles.subtitle}>
-            Manage registered visitors and their visits.
+          <h1 style={styles.heading}>Dashboard Overview</h1>
+          <p style={styles.description}>
+            Monitor visitors and security activity in real time.
           </p>
-
         </div>
 
         <button
-          onClick={onRegister}
-          style={styles.registerButton}
+          style={styles.primaryButton}
+          onClick={() => goTo("Add Visitor")}
         >
-          ⊕ &nbsp; Register New Visitor
+          + Add Visitor
         </button>
-
       </div>
 
       <div style={styles.statsGrid}>
-
         <StatCard
           title="Total Visitors"
-          value={visitors.length}
-          description="Registered visitors"
-          icon="♙"
+          value={totalVisitors}
+          icon="👥"
+          description="Today's visitors"
         />
 
         <StatCard
-          title="Active"
-          value={
-            visitors.filter(
-              (v) => v.status === "Active"
-            ).length
-          }
-          description="Currently on-site"
-          icon="●"
-        />
-
-        <StatCard
-          title="Pending"
-          value={
-            visitors.filter(
-              (v) => v.status === "Pending"
-            ).length
-          }
-          description="Awaiting approval"
-          icon="◷"
-        />
-
-        <StatCard
-          title="Checked Out"
-          value={
-            visitors.filter(
-              (v) =>
-                v.status === "Checked Out"
-            ).length
-          }
-          description="Completed visits"
-          icon="✓"
-        />
-
-      </div>
-
-      <div style={styles.tableCard}>
-
-        <div style={styles.tableHeader}>
-
-          <div>
-
-            <h2 style={styles.tableTitle}>
-              Visitor Records
-            </h2>
-
-            <p style={styles.tableSubtitle}>
-              All registered visitors
-            </p>
-
-          </div>
-
-        </div>
-
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
-          <table style={styles.table}>
-
-            <thead>
-
-              <tr>
-
-                <th style={styles.th}>
-                  Visitor Name
-                </th>
-
-                <th style={styles.th}>
-                  Purpose
-                </th>
-
-                <th style={styles.th}>
-                  Host
-                </th>
-
-                <th style={styles.th}>
-                  Time
-                </th>
-
-                <th style={styles.th}>
-                  Status
-                </th>
-
-                <th style={styles.th}>
-                  Action
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {visitors.map(
-                (visitor, index) => (
-
-                  <tr
-                    key={
-                      visitor.id ||
-                      index
-                    }
-                  >
-
-                    <td style={styles.td}>
-
-                      <div
-                        style={
-                          styles.visitorName
-                        }
-                      >
-
-                        <span
-                          style={
-                            styles.initial
-                          }
-                        >
-                          {visitor.name.charAt(
-                            0
-                          )}
-                        </span>
-
-                        {visitor.name}
-
-                      </div>
-
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.purpose}
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.host}
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.time}
-                    </td>
-
-                    <td style={styles.td}>
-
-                      <StatusBadge
-                        status={
-                          visitor.status
-                        }
-                      />
-
-                    </td>
-
-                    <td style={styles.td}>
-
-                      {visitor.status !==
-                        "Checked Out" && (
-
-                        <button
-                          onClick={() =>
-                            onCheckOut(index)
-                          }
-                          style={
-                            styles.checkoutButton
-                          }
-                        >
-                          Check Out
-                        </button>
-
-                      )}
-
-                    </td>
-
-                  </tr>
-
-                )
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* =====================================================
-   SECURITY LOGS PAGE
-===================================================== */
-
-function SecurityLogsPage() {
-
-  const [search, setSearch] =
-    useState("");
-
-  const [filter, setFilter] =
-    useState("All");
-
-  const logs = [
-    {
-      time: "12:42 PM",
-      user: "Admin User",
-      action: "Visitor Check-in",
-      visitor: "Rahul Sharma",
-      location: "Main Gate",
-      status: "Success",
-    },
-    {
-      time: "12:18 PM",
-      user: "Security Officer",
-      action: "Visitor Check-out",
-      visitor: "Arjun Verma",
-      location: "Main Gate",
-      status: "Success",
-    },
-    {
-      time: "11:56 AM",
-      user: "Admin User",
-      action: "Visitor Registration",
-      visitor: "Aman Gupta",
-      location: "Reception",
-      status: "Success",
-    },
-    {
-      time: "11:30 AM",
-      user: "Security Officer",
-      action: "Access Denied",
-      visitor: "Unknown Visitor",
-      location: "North Gate",
-      status: "Warning",
-    },
-    {
-      time: "11:05 AM",
-      user: "Admin User",
-      action: "Approval Updated",
-      visitor: "Sneha Joshi",
-      location: "Admin Office",
-      status: "Success",
-    },
-  ];
-
-  const filteredLogs = logs.filter((log) => {
-
-    const text =
-      `${log.user} ${log.action} ${log.visitor} ${log.location}`.toLowerCase();
-
-    const matchesSearch =
-      text.includes(
-        search.toLowerCase()
-      );
-
-    const matchesFilter =
-      filter === "All" ||
-      log.status === filter;
-
-    return (
-      matchesSearch &&
-      matchesFilter
-    );
-  });
-
-  const exportLogs = () => {
-
-    const csv =
-      "Time,User,Action,Visitor,Location,Status\n" +
-      filteredLogs
-        .map(
-          (log) =>
-            `"${log.time}","${log.user}","${log.action}","${log.visitor}","${log.location}","${log.status}"`
-        )
-        .join("\n");
-
-    downloadFile(
-      csv,
-      "security-logs.csv"
-    );
-  };
-
-  return (
-    <div>
-
-      <div style={styles.pageHeader}>
-
-        <div>
-
-          <h1 style={styles.heading}>
-            Security Logs
-          </h1>
-
-          <p style={styles.subtitle}>
-            Monitor security events and system activity.
-          </p>
-
-        </div>
-
-        <button
-          onClick={exportLogs}
-          style={styles.registerButton}
-        >
-          ↓ &nbsp; Export Logs
-        </button>
-
-      </div>
-
-      <div style={styles.statsGrid}>
-
-        <StatCard
-          title="Total Events"
-          value={logs.length}
-          description="Recorded today"
-          icon="⊗"
-        />
-
-        <StatCard
-          title="Successful"
-          value={
-            logs.filter(
-              (l) =>
-                l.status === "Success"
-            ).length
-          }
-          description="Normal activity"
-          icon="✓"
-        />
-
-        <StatCard
-          title="Warnings"
-          value={
-            logs.filter(
-              (l) =>
-                l.status === "Warning"
-            ).length
-          }
-          description="Requires attention"
-          icon="!"
-        />
-
-        <StatCard
-          title="System Status"
-          value="Online"
-          description="All systems operational"
-          icon="●"
-        />
-
-      </div>
-
-      <div style={styles.tableCard}>
-
-        <div style={styles.tableHeader}>
-
-          <div>
-
-            <h2 style={styles.tableTitle}>
-              Activity Log
-            </h2>
-
-            <p style={styles.tableSubtitle}>
-              Latest security events
-            </p>
-
-          </div>
-
-          <div style={styles.tableActions}>
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search logs..."
-              style={styles.smallInput}
-            />
-
-            <select
-              value={filter}
-              onChange={(e) =>
-                setFilter(e.target.value)
-              }
-              style={styles.smallSelect}
-            >
-
-              <option value="All">
-                All Events
-              </option>
-
-              <option value="Success">
-                Success
-              </option>
-
-              <option value="Warning">
-                Warnings
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
-          <table style={styles.table}>
-
-            <thead>
-
-              <tr>
-
-                <th style={styles.th}>
-                  TIME
-                </th>
-
-                <th style={styles.th}>
-                  USER
-                </th>
-
-                <th style={styles.th}>
-                  ACTION
-                </th>
-
-                <th style={styles.th}>
-                  VISITOR
-                </th>
-
-                <th style={styles.th}>
-                  LOCATION
-                </th>
-
-                <th style={styles.th}>
-                  STATUS
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {filteredLogs.map(
-                (log, index) => (
-
-                  <tr key={index}>
-
-                    <td style={styles.td}>
-                      {log.time}
-                    </td>
-
-                    <td style={styles.td}>
-                      {log.user}
-                    </td>
-
-                    <td style={styles.td}>
-                      {log.action}
-                    </td>
-
-                    <td style={styles.td}>
-                      {log.visitor}
-                    </td>
-
-                    <td style={styles.td}>
-                      {log.location}
-                    </td>
-
-                    <td style={styles.td}>
-
-                      <StatusBadge
-                        status={
-                          log.status
-                        }
-                      />
-
-                    </td>
-
-                  </tr>
-
-                )
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* =====================================================
-   REPORTS PAGE
-===================================================== */
-
-function ReportsPage({ visitors }) {
-
-  const [reportType, setReportType] =
-    useState("Visitor Activity");
-
-  const [period, setPeriod] =
-    useState("Today");
-
-  const exportReport = () => {
-
-    const csv =
-      "Visitor Name,Host,Purpose,Time,Status\n" +
-      visitors
-        .map(
-          (v) =>
-            `"${v.name}","${v.host}","${v.purpose}","${v.time}","${v.status}"`
-        )
-        .join("\n");
-
-    downloadFile(
-      csv,
-      "visitor-report.csv"
-    );
-  };
-
-  const checkedIn =
-    visitors.filter(
-      (v) => v.status === "Active"
-    ).length;
-
-  const checkedOut =
-    visitors.filter(
-      (v) =>
-        v.status === "Checked Out"
-    ).length;
-
-  const pending =
-    visitors.filter(
-      (v) =>
-        v.status === "Pending"
-    ).length;
-
-  return (
-    <div>
-
-      <div style={styles.pageHeader}>
-
-        <div>
-
-          <h1 style={styles.heading}>
-            Reports
-          </h1>
-
-          <p style={styles.subtitle}>
-            Generate and export visitor activity reports.
-          </p>
-
-        </div>
-
-        <button
-          onClick={exportReport}
-          style={styles.registerButton}
-        >
-          ↓ &nbsp; Export Report
-        </button>
-
-      </div>
-
-      <div style={styles.formCard}>
-
-        <h2 style={styles.formTitle}>
-          Generate Report
-        </h2>
-
-        <p style={styles.tableSubtitle}>
-          Select report type and time period.
-        </p>
-
-        <div style={styles.reportControls}>
-
-          <div style={styles.controlGroup}>
-
-            <label style={styles.label}>
-              REPORT TYPE
-            </label>
-
-            <select
-              value={reportType}
-              onChange={(e) =>
-                setReportType(
-                  e.target.value
-                )
-              }
-              style={styles.input}
-            >
-
-              <option>
-                Visitor Activity
-              </option>
-
-              <option>
-                Security Activity
-              </option>
-
-              <option>
-                Check-in / Check-out
-              </option>
-
-              <option>
-                Pending Visitors
-              </option>
-
-            </select>
-
-          </div>
-
-          <div style={styles.controlGroup}>
-
-            <label style={styles.label}>
-              TIME PERIOD
-            </label>
-
-            <select
-              value={period}
-              onChange={(e) =>
-                setPeriod(
-                  e.target.value
-                )
-              }
-              style={styles.input}
-            >
-
-              <option>
-                Today
-              </option>
-
-              <option>
-                This Week
-              </option>
-
-              <option>
-                This Month
-              </option>
-
-              <option>
-                Last 30 Days
-              </option>
-
-            </select>
-
-          </div>
-
-          <button
-            onClick={() =>
-              alert(
-                `${reportType} report generated for ${period}.`
-              )
-            }
-            style={styles.registerButton}
-          >
-            Generate Report
-          </button>
-
-        </div>
-
-      </div>
-
-      <div style={styles.statsGrid}>
-
-        <StatCard
-          title="Total Visitors"
-          value={visitors.length}
-          description="Registered visitors"
-          icon="♙"
-        />
-
-        <StatCard
-          title="Checked In"
+          title="Currently Inside"
           value={checkedIn}
-          description="Currently inside"
-          icon="⇥"
+          icon="✓"
+          description="Visitors checked in"
         />
 
         <StatCard
           title="Checked Out"
           value={checkedOut}
-          description="Completed visits"
-          icon="✓"
+          icon="↗"
+          description="Visitors completed"
         />
 
         <StatCard
-          title="Pending"
-          value={pending}
-          description="Awaiting approval"
-          icon="◷"
+          title="Security Status"
+          value="Secure"
+          icon="◉"
+          description="All systems operational"
         />
-
       </div>
 
-      <div style={styles.tableCard}>
-
-        <div style={styles.tableHeader}>
-
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
           <div>
-
-            <h2 style={styles.tableTitle}>
-              Visitor Activity Report
-            </h2>
-
-            <p style={styles.tableSubtitle}>
-              {reportType} · {period}
+            <h3 style={styles.cardTitle}>Recent Visitors Log</h3>
+            <p style={styles.cardSubtitle}>
+              Latest visitor activity
             </p>
-
           </div>
 
           <button
-            onClick={exportReport}
-            style={styles.smallButton}
+            style={styles.secondaryButton}
+            onClick={() => goTo("Visitors")}
           >
-            Export CSV
+            View All
           </button>
-
         </div>
 
-        <div
-          style={{
-            overflowX: "auto",
-          }}
-        >
-
-          <table style={styles.table}>
-
-            <thead>
-
-              <tr>
-
-                <th style={styles.th}>
-                  VISITOR
-                </th>
-
-                <th style={styles.th}>
-                  HOST
-                </th>
-
-                <th style={styles.th}>
-                  PURPOSE
-                </th>
-
-                <th style={styles.th}>
-                  TIME
-                </th>
-
-                <th style={styles.th}>
-                  STATUS
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {visitors.map(
-                (visitor, index) => (
-
-                  <tr
-                    key={
-                      visitor.id ||
-                      index
-                    }
-                  >
-
-                    <td style={styles.td}>
-                      {visitor.name}
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.host}
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.purpose}
-                    </td>
-
-                    <td style={styles.td}>
-                      {visitor.time}
-                    </td>
-
-                    <td style={styles.td}>
-
-                      <StatusBadge
-                        status={
-                          visitor.status
-                        }
-                      />
-
-                    </td>
-
-                  </tr>
-
-                )
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
+        <VisitorTable
+          visitors={visitors}
+          showAction={false}
+        />
       </div>
-
     </div>
   );
 }
 
+/* =========================
+   VISITORS
+========================= */
 
-/* =====================================================
-   SYSTEM SETTINGS
-===================================================== */
-
-function SettingsPage() {
-
-  const [notifications, setNotifications] =
-    useState(true);
-
-  const [autoCheckout, setAutoCheckout] =
-    useState(false);
-
-  const [approval, setApproval] =
-    useState(true);
-
-  const [saved, setSaved] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  useEffect(() => {
-
-    const fetchSettings = async () => {
-
-      try {
-
-        const response = await fetch(
-          "http://localhost:5000/api/settings"
-        );
-
-        const data =
-          await response.json();
-
-        setApproval(
-          data.autoApproval ?? true
-        );
-
-        setAutoCheckout(
-          data.autoCheckout ?? false
-        );
-
-        setNotifications(
-          data.notifications ?? true
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Failed to fetch settings:",
-          error
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-    fetchSettings();
-
-  }, []);
-
-  const saveSettings = async () => {
-
-    try {
-
-      const response = await fetch(
-        "http://localhost:5000/api/settings",
-        {
-          method: "PUT",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            autoApproval:
-              approval,
-
-            autoCheckout:
-              autoCheckout,
-
-            notifications:
-              notifications,
-          }),
-        }
-      );
-
-      const data =
-        await response.json();
-
-      if (response.ok) {
-
-        setSaved(true);
-
-        setTimeout(() => {
-          setSaved(false);
-        }, 2500);
-
-      } else {
-
-        console.error(
-          "Failed to save settings:",
-          data
-        );
-
-      }
-
-    } catch (error) {
-
-      console.error(
-        "Failed to save settings:",
-        error
-      );
-
-    }
-  };
-
-  if (loading) {
-    return (
-      <div>
-        Loading settings...
-      </div>
+function VisitorsPage({
+  visitors,
+  allVisitors,
+  search,
+  checkOut,
+}) {
+  const getOriginalIndex = (visitor) => {
+    return allVisitors.findIndex(
+      (item) =>
+        item.name === visitor.name &&
+        item.company === visitor.company &&
+        item.checkIn === visitor.checkIn
     );
-  }
+  };
 
   return (
     <div>
-
-      <div style={styles.pageHeader}>
-
+      <div style={styles.dashboardHeader}>
         <div>
-
-          <h1 style={styles.heading}>
-            System Settings
-          </h1>
-
-          <p style={styles.subtitle}>
-            Manage system preferences and security settings.
+          <h1 style={styles.heading}>Visitors</h1>
+          <p style={styles.description}>
+            Manage all visitor check-in and check-out records.
           </p>
-
         </div>
 
         <button
-          onClick={saveSettings}
-          style={styles.registerButton}
+          style={styles.primaryButton}
+          onClick={() => alert("Visitor registration form coming soon.")}
         >
-          Save Changes
+          + Add Visitor
         </button>
-
       </div>
 
-      {saved && (
-        <div style={styles.successMessage}>
-          ✓ Settings saved successfully.
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <div>
+            <h3 style={styles.cardTitle}>Visitor Records</h3>
+            <p style={styles.cardSubtitle}>
+              {search
+                ? `Showing results for "${search}"`
+                : "All registered visitors"}
+            </p>
+          </div>
+
+          <div style={styles.recordCount}>
+            {visitors.length} Records
+          </div>
+        </div>
+
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Visitor</th>
+              <th style={styles.th}>Company</th>
+              <th style={styles.th}>Host</th>
+              <th style={styles.th}>Purpose</th>
+              <th style={styles.th}>Check In</th>
+              <th style={styles.th}>Check Out</th>
+              <th style={styles.th}>Status</th>
+              <th style={styles.th}>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {visitors.map((visitor, index) => {
+              const originalIndex = getOriginalIndex(visitor);
+
+              return (
+                <tr key={`${visitor.name}-${index}`}>
+                  <td style={styles.td}>
+                    <div style={styles.visitorCell}>
+                      <div style={styles.avatar}>
+                        {visitor.name.charAt(0)}
+                      </div>
+                      <strong>{visitor.name}</strong>
+                    </div>
+                  </td>
+
+                  <td style={styles.td}>{visitor.company}</td>
+                  <td style={styles.td}>{visitor.host}</td>
+                  <td style={styles.td}>{visitor.purpose}</td>
+                  <td style={styles.td}>{visitor.checkIn}</td>
+                  <td style={styles.td}>{visitor.checkOut}</td>
+
+                  <td style={styles.td}>
+                    <StatusBadge status={visitor.status} />
+                  </td>
+
+                  <td style={styles.td}>
+                    {visitor.status === "Checked In" ? (
+                      <button
+                        style={styles.checkoutButton}
+                        onClick={() => checkOut(originalIndex)}
+                      >
+                        Check Out
+                      </button>
+                    ) : (
+                      <span style={styles.completedText}>
+                        Completed
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {visitors.length === 0 && (
+          <div style={styles.emptyState}>
+            No visitors found.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   VISITOR TABLE
+========================= */
+
+function VisitorTable({ visitors, showAction = false }) {
+  return (
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Visitor</th>
+            <th style={styles.th}>Company</th>
+            <th style={styles.th}>Host</th>
+            <th style={styles.th}>Purpose</th>
+            <th style={styles.th}>Check In</th>
+            <th style={styles.th}>Check Out</th>
+            <th style={styles.th}>Status</th>
+            {showAction && <th style={styles.th}>Action</th>}
+          </tr>
+        </thead>
+
+        <tbody>
+          {visitors.map((visitor, index) => (
+            <tr key={`${visitor.name}-${index}`}>
+              <td style={styles.td}>
+                <div style={styles.visitorCell}>
+                  <div style={styles.avatar}>
+                    {visitor.name.charAt(0)}
+                  </div>
+                  <strong>{visitor.name}</strong>
+                </div>
+              </td>
+
+              <td style={styles.td}>{visitor.company}</td>
+              <td style={styles.td}>{visitor.host}</td>
+              <td style={styles.td}>{visitor.purpose}</td>
+              <td style={styles.td}>{visitor.checkIn}</td>
+              <td style={styles.td}>{visitor.checkOut}</td>
+
+              <td style={styles.td}>
+                <StatusBadge status={visitor.status} />
+              </td>
+
+              {showAction && (
+                <td style={styles.td}>
+                  <button style={styles.checkoutButton}>
+                    Check Out
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* =========================
+   SECURITY LOGS
+========================= */
+
+function SecurityLogs({ visitors }) {
+  return (
+    <div>
+      <div style={styles.dashboardHeader}>
+        <div>
+          <h1 style={styles.heading}>Security Logs</h1>
+          <p style={styles.description}>
+            Monitor visitor security and access activity.
+          </p>
+        </div>
+      </div>
+
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <div>
+            <h3 style={styles.cardTitle}>Access Activity</h3>
+            <p style={styles.cardSubtitle}>
+              Recent security events
+            </p>
+          </div>
+        </div>
+
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Visitor</th>
+              <th style={styles.th}>Event</th>
+              <th style={styles.th}>Time</th>
+              <th style={styles.th}>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {visitors.map((visitor, index) => (
+              <tr key={index}>
+                <td style={styles.td}>{visitor.name}</td>
+                <td style={styles.td}>
+                  {visitor.status === "Checked In"
+                    ? "Visitor Check-In"
+                    : "Visitor Check-Out"}
+                </td>
+                <td style={styles.td}>
+                  {visitor.status === "Checked In"
+                    ? visitor.checkIn
+                    : visitor.checkOut}
+                </td>
+                <td style={styles.td}>
+                  <StatusBadge status="Secure" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   REPORTS
+========================= */
+
+function Reports({ visitors }) {
+  const checkedIn = visitors.filter(
+    (visitor) => visitor.status === "Checked In"
+  ).length;
+
+  const checkedOut = visitors.filter(
+    (visitor) => visitor.status === "Checked Out"
+  ).length;
+
+  const downloadReport = () => {
+    const csv = [
+      "Name,Company,Host,Purpose,Check In,Check Out,Status",
+      ...visitors.map(
+        (visitor) =>
+          `"${visitor.name}","${visitor.company}","${visitor.host}","${visitor.purpose}","${visitor.checkIn}","${visitor.checkOut}","${visitor.status}"`
+      ),
+    ].join("\n");
+
+    downloadFile(csv, "visitra-visitor-report.csv", "text/csv");
+  };
+
+  return (
+    <div>
+      <div style={styles.dashboardHeader}>
+        <div>
+          <h1 style={styles.heading}>Reports</h1>
+          <p style={styles.description}>
+            View and export visitor activity reports.
+          </p>
+        </div>
+
+        <button
+          style={styles.primaryButton}
+          onClick={downloadReport}
+        >
+          ↓ Export Report
+        </button>
+      </div>
+
+      <div style={styles.statsGrid}>
+        <StatCard
+          title="Total Records"
+          value={visitors.length}
+          icon="▤"
+          description="Visitor records"
+        />
+
+        <StatCard
+          title="Checked In"
+          value={checkedIn}
+          icon="✓"
+          description="Currently active"
+        />
+
+        <StatCard
+          title="Checked Out"
+          value={checkedOut}
+          icon="↗"
+          description="Completed visits"
+        />
+
+        <StatCard
+          title="System Status"
+          value="Active"
+          icon="◉"
+          description="Reporting system"
+        />
+      </div>
+
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <div>
+            <h3 style={styles.cardTitle}>Visitor Report</h3>
+            <p style={styles.cardSubtitle}>
+              Complete visitor activity
+            </p>
+          </div>
+        </div>
+
+        <VisitorTable visitors={visitors} />
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   HOSTS
+========================= */
+
+function Hosts() {
+  const [hosts, setHosts] = useState([
+    { id: 1, name: "Sarah Connor", employeeId: "EMP001", email: "sarah@company.com", phone: "9876543210", department: "Engineering", status: "Active" },
+    { id: 2, name: "John Smith", employeeId: "EMP002", email: "john@company.com", phone: "9876543211", department: "Human Resources", status: "Active" },
+  ]);
+
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ name: "", employeeId: "", email: "", phone: "", department: "", status: "Active" });
+
+  const handleChange = (e) => {
+    setFormData((current) => ({ ...current, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setHosts((current) => [...current, { id: Date.now(), ...formData }]);
+    setFormData({ name: "", employeeId: "", email: "", phone: "", department: "", status: "Active" });
+    setShowForm(false);
+  };
+
+  return (
+    <div>
+      <div style={styles.dashboardHeader}>
+        <div>
+          <h1 style={styles.heading}>Hosts</h1>
+          <p style={styles.description}>Manage hosts and employees who receive visitors.</p>
+        </div>
+        <button onClick={() => setShowForm((current) => !current)} style={styles.primaryButton}>
+          {showForm ? "Close Form" : "+ Add Host"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={styles.formCard}>
+          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#1E293B" }}>Add New Host</h2>
+          <p style={styles.cardSubtitle}>Enter the employee details below.</p>
+          <form onSubmit={handleSubmit}>
+            <div style={styles.formGrid}>
+              <FormInput label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Enter full name" />
+              <FormInput label="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder="EMP001" />
+              <FormInput label="Email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="host@company.com" />
+              <FormInput label="Phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" />
+              <FormInput label="Department" name="department" value={formData.department} onChange={handleChange} placeholder="Engineering" />
+              <div style={styles.formGroup}>
+                <label style={styles.formLabel}>Status</label>
+                <select name="status" value={formData.status} onChange={handleChange} style={styles.formInput}>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div style={styles.formActions}>
+              <button type="button" onClick={() => setShowForm(false)} style={styles.secondaryButton}>Cancel</button>
+              <button type="submit" style={styles.primaryButton}>Add Host</button>
+            </div>
+          </form>
         </div>
       )}
 
-      <div style={styles.settingsGrid}>
-
-        <div style={styles.formCard}>
-
-          <h2 style={styles.formTitle}>
-            Visitor Management
-          </h2>
-
-          <SettingRow
-            title="Require Host Approval"
-            description="Visitors must be approved by their host."
-            checked={approval}
-            onChange={setApproval}
-          />
-
-          <SettingRow
-            title="Automatic Check-out"
-            description="Automatically check visitors out after their visit."
-            checked={autoCheckout}
-            onChange={setAutoCheckout}
-          />
-
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <div>
+            <h3 style={styles.cardTitle}>Registered Hosts</h3>
+            <p style={styles.cardSubtitle}>View and manage employees who can receive visitors.</p>
+          </div>
+          <div style={styles.recordCount}>{hosts.length} {hosts.length === 1 ? "Host" : "Hosts"}</div>
         </div>
-
-        <div style={styles.formCard}>
-
-          <h2 style={styles.formTitle}>
-            Notifications
-          </h2>
-
-          <SettingRow
-            title="Security Notifications"
-            description="Receive alerts for important security events."
-            checked={notifications}
-            onChange={setNotifications}
-          />
-
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead><tr>
+              <th style={styles.th}>Host</th><th style={styles.th}>Employee ID</th><th style={styles.th}>Department</th><th style={styles.th}>Email</th><th style={styles.th}>Phone</th><th style={styles.th}>Status</th>
+            </tr></thead>
+            <tbody>
+              {hosts.map((host) => (
+                <tr key={host.id}>
+                  <td style={styles.td}><div style={styles.visitorCell}><div style={styles.avatar}>{host.name.charAt(0)}</div><strong>{host.name}</strong></div></td>
+                  <td style={styles.td}>{host.employeeId}</td><td style={styles.td}>{host.department}</td><td style={styles.td}>{host.email}</td><td style={styles.td}>{host.phone}</td>
+                  <td style={styles.td}><StatusBadge status={host.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-
       </div>
-
-      <div style={styles.formCard}>
-
-        <h2 style={styles.formTitle}>
-          System Information
-        </h2>
-
-        <div style={styles.infoRow}>
-          <span>
-            System Name
-          </span>
-
-          <strong>
-            SECURE-PASS
-          </strong>
-        </div>
-
-        <div style={styles.infoRow}>
-          <span>
-            Version
-          </span>
-
-          <strong>
-            1.0.0
-          </strong>
-        </div>
-
-        <div style={styles.infoRow}>
-          <span>
-            System Status
-          </span>
-
-          <strong
-            style={{
-              color: "#166534",
-            }}
-          >
-            ● Online
-          </strong>
-        </div>
-
-      </div>
-
     </div>
   );
 }
 
+/* =========================
+   PRE-REGISTRATION
+========================= */
 
-/* =====================================================
-   PRE REGISTRATION
-===================================================== */
+function PreRegistration() {
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    host: "",
+    purpose: "",
+    date: "",
+  });
 
-function PreRegistrationPage({
-  onBack,
-  onSubmit,
-}) {
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const [name, setName] =
-    useState("");
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const [email, setEmail] =
-    useState("");
-
-  const [phone, setPhone] =
-    useState("");
-
-  const [company, setCompany] =
-    useState("");
-
-  const [host, setHost] =
-    useState("");
-
-  const [purpose, setPurpose] =
-    useState("");
-
-  const [date, setDate] =
-    useState("");
-
-  const [time, setTime] =
-    useState("");
-
-  const [submitting, setSubmitting] =
-    useState(false);
-
-  const submit = async () => {
-
-    if (
-      !name.trim() ||
-      !email.trim() ||
-      !phone.trim() ||
-      !host.trim() ||
-      !purpose.trim() ||
-      !date ||
-      !time
-    ) {
-
-      alert(
-        "Please fill in all required fields."
-      );
-
+    if (!form.name || !form.company || !form.host) {
+      alert("Please fill in the required fields.");
       return;
     }
 
-    try {
+    alert("Visitor pre-registration submitted successfully.");
 
-      setSubmitting(true);
-
-      const visitDateTime =
-        new Date(
-          `${date}T${time}`
-        ).toISOString();
-
-      const response =
-        await fetch(
-          "http://localhost:5000/api/visitors",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              visitorName:
-                name.trim(),
-
-              phone:
-                phone.trim(),
-
-              email:
-                email.trim(),
-
-              purpose:
-                purpose.trim(),
-
-              host:
-                host.trim(),
-
-              visitDateTime:
-                visitDateTime,
-
-              status:
-                "Pending",
-            }),
-          }
-        );
-
-      const data =
-        await response.json();
-
-      console.log(
-        "NEW VISITOR FROM BACKEND:",
-        data
-      );
-
-      if (!response.ok) {
-
-        console.error(
-          "Failed to register visitor:",
-          data
-        );
-
-        alert(
-          data.message ||
-            "Failed to register visitor."
-        );
-
-        return;
-      }
-
-      /*
-        The backend successfully created
-        the visitor.
-
-        We send the created visitor back
-        to App.jsx.
-
-        IMPORTANT:
-        There is NO goTo() here.
-      */
-
-      onSubmit({
-
-        id:
-          data._id,
-
-        name:
-          data.visitorName,
-
-        purpose:
-          data.purpose || "",
-
-        host:
-          data.host || "",
-
-        time:
-          data.visitDateTime
-            ? new Date(
-                data.visitDateTime
-              ).toLocaleTimeString(
-                "en-US",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              )
-            : "",
-
-        status:
-          data.status ===
-          "Checked-in"
-            ? "Active"
-            : data.status ===
-              "Checked-out"
-            ? "Checked Out"
-            : data.status ===
-              "Approved"
-            ? "Active"
-            : data.status ===
-              "Rejected"
-            ? "Rejected"
-            : "Pending",
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        "Failed to register visitor:",
-        error
-      );
-
-      alert(
-        "Unable to connect to the backend."
-      );
-
-    } finally {
-
-      setSubmitting(false);
-
-    }
+    setForm({
+      name: "",
+      company: "",
+      host: "",
+      purpose: "",
+      date: "",
+    });
   };
 
   return (
     <div>
-
-      <div style={styles.pageHeader}>
-
+      <div style={styles.dashboardHeader}>
         <div>
-
-          <h1 style={styles.heading}>
-            New Pre-Registration
-          </h1>
-
-          <p style={styles.subtitle}>
-            Register a visitor before their arrival.
+          <h1 style={styles.heading}>Add Visitor</h1>
+          <p style={styles.description}>
+            Register an upcoming visitor before their arrival.
           </p>
-
         </div>
-
-        <button
-          onClick={onBack}
-          style={styles.smallButton}
-          disabled={submitting}
-        >
-          ← Back
-        </button>
-
       </div>
 
       <div style={styles.formCard}>
+        <form onSubmit={handleSubmit}>
+          <div style={styles.formGrid}>
+            <FormInput
+              label="Visitor Name *"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Enter visitor name"
+            />
 
-        <h2 style={styles.formTitle}>
-          Visitor Information
-        </h2>
+            <FormInput
+              label="Company *"
+              name="company"
+              value={form.company}
+              onChange={handleChange}
+              placeholder="Enter company name"
+            />
 
-        <div style={styles.formGrid}>
+            <FormInput
+              label="Host *"
+              name="host"
+              value={form.host}
+              onChange={handleChange}
+              placeholder="Enter host name"
+            />
 
-          <FormInput
-            label="VISITOR NAME *"
-            value={name}
-            onChange={setName}
-            placeholder="Enter visitor name"
-          />
+            <FormInput
+              label="Purpose"
+              name="purpose"
+              value={form.purpose}
+              onChange={handleChange}
+              placeholder="Reason for visit"
+            />
 
-          <FormInput
-            label="EMAIL *"
-            value={email}
-            onChange={setEmail}
-            placeholder="Enter email"
-            type="email"
-          />
+            <FormInput
+              label="Expected Visit Date"
+              name="date"
+              type="date"
+              value={form.date}
+              onChange={handleChange}
+            />
+          </div>
 
-          <FormInput
-            label="PHONE NUMBER *"
-            value={phone}
-            onChange={setPhone}
-            placeholder="Enter phone number"
-          />
-
-          <FormInput
-            label="COMPANY / ORGANIZATION"
-            value={company}
-            onChange={setCompany}
-            placeholder="Enter company"
-          />
-
-          <FormInput
-            label="HOST / EMPLOYEE *"
-            value={host}
-            onChange={setHost}
-            placeholder="Enter host name"
-          />
-
-          <FormInput
-            label="PURPOSE OF VISIT *"
-            value={purpose}
-            onChange={setPurpose}
-            placeholder="Enter purpose"
-          />
-
-          <FormInput
-            label="VISIT DATE *"
-            value={date}
-            onChange={setDate}
-            type="date"
-          />
-
-          <FormInput
-            label="VISIT TIME *"
-            value={time}
-            onChange={setTime}
-            type="time"
-          />
-
-        </div>
-
-        <div style={styles.formButtons}>
-
-          <button
-            onClick={onBack}
-            style={styles.cancelButton}
-            disabled={submitting}
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={submit}
-            style={styles.registerButton}
-            disabled={submitting}
-          >
-            {submitting
-              ? "Submitting..."
-              : "Submit Pre-Registration"}
-          </button>
-
-        </div>
-
+          <div style={styles.formActions}>
+            <button type="submit" style={styles.primaryButton}>
+              Register Visitor
+            </button>
+          </div>
+        </form>
       </div>
-
     </div>
   );
 }
 
+/* =========================
+   SETTINGS
+========================= */
 
-/* =====================================================
+function Settings() {
+  const [notifications, setNotifications] = useState(true);
+  const [securityAlerts, setSecurityAlerts] = useState(true);
+  const [autoCheckout, setAutoCheckout] = useState(false);
+
+  return (
+    <div>
+      <div style={styles.dashboardHeader}>
+        <div>
+          <h1 style={styles.heading}>System Settings</h1>
+          <p style={styles.description}>
+            Configure VISITRA system preferences.
+          </p>
+        </div>
+      </div>
+
+      <div style={styles.settingsGrid}>
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>General Settings</h3>
+          <p style={styles.cardSubtitle}>
+            Basic system configuration
+          </p>
+
+          <div style={styles.settingsList}>
+            <SettingRow
+              title="System Name"
+              description="Name displayed across the system"
+              value="VISITRA"
+            />
+
+            <SettingRow
+              title="System Status"
+              description="Current system availability"
+              value="Active"
+            />
+
+            <SettingRow
+              title="Visitor Management"
+              description="Visitor registration system"
+              value="Enabled"
+            />
+          </div>
+        </div>
+
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>Notifications</h3>
+          <p style={styles.cardSubtitle}>
+            Manage system notifications
+          </p>
+
+          <div style={styles.settingsList}>
+            <ToggleRow
+              title="Visitor Notifications"
+              description="Receive visitor activity notifications"
+              value={notifications}
+              onChange={() => setNotifications(!notifications)}
+            />
+
+            <ToggleRow
+              title="Security Alerts"
+              description="Receive security-related alerts"
+              value={securityAlerts}
+              onChange={() =>
+                setSecurityAlerts(!securityAlerts)
+              }
+            />
+
+            <ToggleRow
+              title="Automatic Checkout"
+              description="Automatically checkout visitors"
+              value={autoCheckout}
+              onChange={() => setAutoCheckout(!autoCheckout)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
    SMALL COMPONENTS
-===================================================== */
+========================= */
 
 function StatCard({
   title,
   value,
-  description,
   icon,
+  description,
 }) {
   return (
     <div style={styles.statCard}>
-
       <div style={styles.statTop}>
+        <div>
+          <p style={styles.statTitle}>{title}</p>
+          <h2 style={styles.statValue}>{value}</h2>
+        </div>
 
-        <span style={styles.statTitle}>
-          {title}
-        </span>
-
-        <span style={styles.statIcon}>
-          {icon}
-        </span>
-
+        <div style={styles.statIcon}>{icon}</div>
       </div>
 
-      <div style={styles.statValue}>
-        {value}
-      </div>
-
-      <div style={styles.statDescription}>
-        {description}
-      </div>
-
+      <p style={styles.statDescription}>{description}</p>
     </div>
   );
 }
 
-
 function StatusBadge({ status }) {
+  let badgeStyle = styles.statusBlue;
 
-  let style =
-    styles.activeBadge;
-
-  if (
-    status === "Pending" ||
-    status === "Warning"
-  ) {
-    style =
-      styles.pendingBadge;
+  if (status === "Checked In" || status === "Secure") {
+    badgeStyle = styles.statusGreen;
   }
 
-  if (
-    status === "Checked Out"
-  ) {
-    style =
-      styles.checkedOutBadge;
+  if (status === "Checked Out") {
+    badgeStyle = styles.statusGray;
+  }
+
+  if (status === "Pending") {
+    badgeStyle = styles.statusYellow;
   }
 
   return (
-    <span
-      style={{
-        ...styles.badge,
-        ...style,
-      }}
-    >
+    <span style={{ ...styles.statusBadge, ...badgeStyle }}>
       {status}
     </span>
   );
 }
 
-
 function SettingRow({
   title,
   description,
-  checked,
-  onChange,
+  value,
 }) {
   return (
     <div style={styles.settingRow}>
-
       <div>
-
-        <div style={styles.settingTitle}>
-          {title}
-        </div>
-
+        <div style={styles.settingTitle}>{title}</div>
         <div style={styles.settingDescription}>
           {description}
         </div>
-
       </div>
 
-      <button
-        onClick={() =>
-          onChange(!checked)
-        }
-        style={{
-          ...styles.toggle,
-          ...(checked
-            ? styles.toggleOn
-            : styles.toggleOff),
-        }}
-      >
-
-        <span
-          style={{
-            ...styles.toggleCircle,
-            ...(checked
-              ? styles.circleOn
-              : styles.circleOff),
-          }}
-        />
-
-      </button>
-
+      <span style={styles.settingValue}>{value}</span>
     </div>
   );
 }
 
+function ToggleRow({
+  title,
+  description,
+  value,
+  onChange,
+}) {
+  return (
+    <div style={styles.settingRow}>
+      <div>
+        <div style={styles.settingTitle}>{title}</div>
+        <div style={styles.settingDescription}>
+          {description}
+        </div>
+      </div>
+
+      <button
+        onClick={onChange}
+        style={{
+          ...styles.toggle,
+          ...(value ? styles.toggleOn : styles.toggleOff),
+        }}
+      >
+        <span
+          style={{
+            ...styles.toggleCircle,
+            ...(value ? styles.toggleCircleOn : {}),
+          }}
+        />
+      </button>
+    </div>
+  );
+}
 
 function FormInput({
   label,
+  name,
   value,
   onChange,
   placeholder,
   type = "text",
 }) {
   return (
-    <div>
-
-      <label style={styles.label}>
-        {label}
-      </label>
+    <div style={styles.formGroup}>
+      <label style={styles.formLabel}>{label}</label>
 
       <input
         type={type}
+        name={name}
         value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={onChange}
         placeholder={placeholder}
-        style={styles.input}
+        style={styles.formInput}
       />
-
     </div>
   );
 }
 
+/* =========================
+   DOWNLOAD
+========================= */
 
-function downloadFile(
-  content,
-  filename
-) {
+function downloadFile(content, fileName, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
 
-  const blob = new Blob(
-    [content],
-    {
-      type:
-        "text/csv;charset=utf-8;",
-    }
-  );
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const link =
-    document.createElement("a");
-
+  const link = document.createElement("a");
   link.href = url;
-  link.download = filename;
-
+  link.download = fileName;
   document.body.appendChild(link);
-
   link.click();
-
   document.body.removeChild(link);
 
   URL.revokeObjectURL(url);
 }
 
-
-/* =====================================================
+/* =========================
    STYLES
-===================================================== */
+========================= */
 
 const styles = {
-
   app: {
     minHeight: "100vh",
     display: "flex",
-    background: "#f5f5f5",
+    background: "#F8FAFC",
     fontFamily:
       "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    color: "#171717",
+    color: "#1E293B",
   },
 
   sidebar: {
-    width: "240px",
+    width: "250px",
     minHeight: "100vh",
-    background: "#ffffff",
-    borderRight:
-      "1px solid #e5e7eb",
-    flexShrink: 0,
+    background: "#FFFFFF",
+    borderRight: "1px solid #E2E8F0",
+    display: "flex",
+    flexDirection: "column",
+    position: "fixed",
+    left: 0,
+    top: 0,
+    bottom: 0,
   },
 
   logoArea: {
@@ -2243,102 +1090,143 @@ const styles = {
     display: "flex",
     alignItems: "center",
     padding: "0 24px",
-    borderBottom:
-      "1px solid #e5e7eb",
+    borderBottom: "1px solid #E2E8F0",
   },
 
-  logoBox: {
-    width: "28px",
-    height: "28px",
-    background: "#171717",
-    color: "#ffffff",
-    borderRadius: "4px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "700",
+  logoImage: {
+    width: "34px",
+    height: "34px",
+    objectFit: "contain",
+    display: "block",
     marginRight: "10px",
+    background: "transparent",
   },
 
   logoText: {
-    fontSize: "13px",
-    fontWeight: "700",
-    letterSpacing: "0.4px",
+    fontSize: "15px",
+    fontWeight: "800",
+    letterSpacing: "0.7px",
+    color: "#1E293B",
   },
 
-  sidebarContent: {
-    padding: "18px 12px",
+  nav: {
+    padding: "20px 14px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px",
   },
 
-  sectionTitle: {
-    fontSize: "9px",
-    fontWeight: "700",
-    color: "#9ca3af",
-    letterSpacing: "1px",
-    margin:
-      "0 0 8px 10px",
-  },
-
-  navButton: {
+  navItem: {
     width: "100%",
     border: "none",
     background: "transparent",
+    color: "#64748B",
+    padding: "12px 14px",
+    borderRadius: "8px",
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "10px 12px",
-    marginBottom: "2px",
-    borderRadius: "6px",
-    color: "#6b7280",
-    fontSize: "13px",
+    fontSize: "14px",
+    fontWeight: "500",
     cursor: "pointer",
     textAlign: "left",
   },
 
-  activeNav: {
-    background: "#e5e5e7",
-    color: "#171717",
+  navItemActive: {
+    background: "#EFF6FF",
+    color: "#2563EB",
     fontWeight: "600",
   },
 
   navIcon: {
-    width: "16px",
+    width: "20px",
     textAlign: "center",
-    fontSize: "14px",
+    fontSize: "16px",
   },
 
-  mainArea: {
-    flex: 1,
-    minWidth: 0,
+  sidebarBottom: {
+    marginTop: "auto",
+    padding: "16px",
   },
 
-  navbar: {
-    height: "64px",
-    background: "#ffffff",
-    borderBottom:
-      "1px solid #e5e7eb",
+  securityCard: {
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
+    borderRadius: "10px",
+    padding: "12px",
     display: "flex",
     alignItems: "center",
-    justifyContent:
-      "space-between",
-    padding: "0 28px",
+    gap: "10px",
+  },
+
+  securityIcon: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    background: "#DCFCE7",
+    color: "#16A34A",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700",
+  },
+
+  securityTitle: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+
+  securityText: {
+    fontSize: "10px",
+    color: "#64748B",
+    marginTop: "2px",
+  },
+
+  main: {
+    marginLeft: "250px",
+    width: "calc(100% - 250px)",
+    minHeight: "100vh",
+  },
+
+  topbar: {
+    height: "64px",
+    background: "#FFFFFF",
+    borderBottom: "1px solid #E2E8F0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 30px",
+  },
+
+  pageTitle: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "700",
+  },
+
+  pageSubtitle: {
+    margin: "2px 0 0",
+    fontSize: "11px",
+    color: "#94A3B8",
+  },
+
+  topbarRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: "18px",
   },
 
   searchBox: {
-    width: "310px",
-    height: "34px",
-    border:
-      "1px solid #dcdfe4",
-    borderRadius: "6px",
+    width: "230px",
+    height: "36px",
+    border: "1px solid #E2E8F0",
+    borderRadius: "7px",
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    padding: "0 10px",
-  },
-
-  searchIcon: {
-    color: "#9ca3af",
+    padding: "0 11px",
+    background: "#FFFFFF",
   },
 
   searchInput: {
@@ -2346,79 +1234,86 @@ const styles = {
     outline: "none",
     width: "100%",
     fontSize: "12px",
+    color: "#1E293B",
   },
 
-  userArea: {
+  notification: {
+    fontSize: "20px",
+    color: "#64748B",
+    cursor: "pointer",
+  },
+
+  profile: {
     display: "flex",
     alignItems: "center",
     gap: "9px",
   },
 
-  notification: {
-    width: "32px",
-    height: "32px",
+  profileAvatar: {
+    width: "34px",
+    height: "34px",
     borderRadius: "50%",
-    border:
-      "1px solid #d1d5db",
-    background: "#ffffff",
-    cursor: "pointer",
-  },
-
-  avatar: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    background: "#e5e7eb",
+    background: "#DBEAFE",
+    color: "#2563EB",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "10px",
-    color: "#6b7280",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: "13px",
   },
 
-  adminName: {
-    fontSize: "11px",
+  profileName: {
+    fontSize: "12px",
     fontWeight: "700",
   },
 
-  adminRole: {
-    fontSize: "9px",
-    color: "#9ca3af",
+  profileRole: {
+    fontSize: "10px",
+    color: "#64748B",
+    marginTop: "2px",
   },
 
   content: {
-    padding: "26px 24px",
-    maxWidth: "1200px",
-    margin: "0 auto",
+    padding: "30px",
   },
 
-  pageHeader: {
+  dashboardHeader: {
     display: "flex",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent:
-      "space-between",
-    marginBottom: "18px",
+    marginBottom: "24px",
   },
 
   heading: {
-    fontSize: "21px",
     margin: 0,
+    fontSize: "24px",
     fontWeight: "700",
+    color: "#1E293B",
   },
 
-  subtitle: {
-    margin: "4px 0 0",
-    fontSize: "11px",
-    color: "#8a8f98",
+  description: {
+    margin: "6px 0 0",
+    fontSize: "13px",
+    color: "#64748B",
   },
 
-  registerButton: {
-    background: "#242424",
-    color: "#ffffff",
+  primaryButton: {
     border: "none",
-    borderRadius: "5px",
-    padding: "10px 15px",
+    background: "#2563EB",
+    color: "#FFFFFF",
+    padding: "11px 17px",
+    borderRadius: "7px",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+
+  secondaryButton: {
+    border: "1px solid #CBD5E1",
+    background: "#FFFFFF",
+    color: "#475569",
+    padding: "8px 13px",
+    borderRadius: "6px",
     fontSize: "11px",
     fontWeight: "600",
     cursor: "pointer",
@@ -2426,312 +1321,272 @@ const styles = {
 
   statsGrid: {
     display: "grid",
-    gridTemplateColumns:
-      "repeat(4, 1fr)",
-    gap: "12px",
-    marginBottom: "18px",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "16px",
+    marginBottom: "22px",
   },
 
   statCard: {
-    background: "#ffffff",
-    border:
-      "1px solid #dedfe2",
-    borderRadius: "7px",
-    padding: "14px",
-    minHeight: "88px",
+    background: "#FFFFFF",
+    border: "1px solid #E2E8F0",
+    borderRadius: "10px",
+    padding: "18px",
   },
 
   statTop: {
     display: "flex",
-    justifyContent:
-      "space-between",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
 
   statTitle: {
-    fontSize: "10px",
-    color: "#666b73",
-  },
-
-  statIcon: {
-    color: "#9ca3af",
+    margin: 0,
+    fontSize: "11px",
+    color: "#64748B",
+    fontWeight: "600",
   },
 
   statValue: {
-    fontSize: "22px",
+    margin: "7px 0 0",
+    fontSize: "25px",
     fontWeight: "700",
-    marginTop: "8px",
+    color: "#1E293B",
+  },
+
+  statIcon: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "8px",
+    background: "#EFF6FF",
+    color: "#2563EB",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "17px",
   },
 
   statDescription: {
-    fontSize: "9px",
-    color: "#a4a8ae",
-    marginTop: "2px",
+    margin: "13px 0 0",
+    fontSize: "10px",
+    color: "#94A3B8",
   },
 
-  tableCard: {
-    background: "#ffffff",
-    border:
-      "1px solid #dedfe2",
-    borderRadius: "7px",
+  card: {
+    background: "#FFFFFF",
+    border: "1px solid #E2E8F0",
+    borderRadius: "10px",
     overflow: "hidden",
-    marginBottom: "18px",
   },
 
-  tableHeader: {
-    minHeight: "54px",
+  cardHeader: {
+    padding: "18px 20px",
     display: "flex",
-    justifyContent:
-      "space-between",
     alignItems: "center",
-    padding: "0 14px",
-    borderBottom:
-      "1px solid #e5e7eb",
+    justifyContent: "space-between",
+    borderBottom: "1px solid #E2E8F0",
   },
 
-  tableTitle: {
-    fontSize: "12px",
+  cardTitle: {
     margin: 0,
+    fontSize: "14px",
     fontWeight: "700",
+    color: "#1E293B",
   },
 
-  tableSubtitle: {
-    fontSize: "9px",
-    color: "#9ca3af",
-    margin:
-      "3px 0 0",
+  cardSubtitle: {
+    margin: "4px 0 0",
+    fontSize: "10px",
+    color: "#94A3B8",
   },
 
-  tableActions: {
-    display: "flex",
-    gap: "7px",
-    alignItems: "center",
-  },
-
-  smallButton: {
-    border:
-      "1px solid #dfe1e5",
-    background: "#ffffff",
-    borderRadius: "4px",
-    padding: "7px 10px",
-    fontSize: "9px",
-    color: "#555",
-    cursor: "pointer",
-  },
-
-  smallInput: {
-    height: "30px",
-    width: "150px",
-    border:
-      "1px solid #dfe1e5",
-    borderRadius: "4px",
-    padding: "0 8px",
-    outline: "none",
-    fontSize: "9px",
-  },
-
-  smallSelect: {
-    height: "30px",
-    border:
-      "1px solid #dfe1e5",
-    borderRadius: "4px",
-    padding: "0 8px",
-    background: "#ffffff",
-    fontSize: "9px",
+  tableWrapper: {
+    overflowX: "auto",
   },
 
   table: {
     width: "100%",
-    borderCollapse:
-      "collapse",
+    borderCollapse: "collapse",
+    fontSize: "11px",
   },
 
   th: {
+    background: "#F8FAFC",
+    color: "#64748B",
+    fontSize: "10px",
+    fontWeight: "700",
     textAlign: "left",
-    padding: "10px 13px",
-    fontSize: "9px",
-    color: "#777c84",
-    background: "#fafafa",
-    fontWeight: "600",
-    borderBottom:
-      "1px solid #e5e7eb",
+    padding: "12px 14px",
+    borderBottom: "1px solid #E2E8F0",
     whiteSpace: "nowrap",
   },
 
   td: {
-    padding: "11px 13px",
-    fontSize: "10px",
-    color: "#6b7280",
-    borderBottom:
-      "1px solid #e5e7eb",
+    padding: "13px 14px",
+    borderBottom: "1px solid #F1F5F9",
+    color: "#475569",
     whiteSpace: "nowrap",
   },
 
-  visitorName: {
+  visitorCell: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    color: "#222222",
-    fontWeight: "500",
+    gap: "9px",
+    color: "#1E293B",
   },
 
-  initial: {
-    width: "24px",
-    height: "24px",
+  avatar: {
+    width: "28px",
+    height: "28px",
     borderRadius: "50%",
-    background: "#e5e7eb",
-    display: "inline-flex",
+    background: "#DBEAFE",
+    color: "#2563EB",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "9px",
-    color: "#6b7280",
-    fontWeight: "600",
+    fontSize: "10px",
+    fontWeight: "700",
   },
 
-  badge: {
+  statusBadge: {
+    display: "inline-block",
     padding: "4px 8px",
-    borderRadius: "4px",
-    fontSize: "8px",
-    fontWeight: "600",
-  },
-
-  activeBadge: {
-    background: "#262626",
-    color: "#ffffff",
-  },
-
-  pendingBadge: {
-    background: "#fff7ed",
-    color: "#9a3412",
-  },
-
-  checkedOutBadge: {
-    background: "#f1f1f1",
-    color: "#6b7280",
-  },
-
-  linkButton: {
-    border: "none",
-    background: "transparent",
-    textDecoration:
-      "underline",
+    borderRadius: "20px",
     fontSize: "9px",
-    cursor: "pointer",
-    marginRight: "10px",
-    color: "#333333",
+    fontWeight: "700",
+  },
+
+  statusGreen: {
+    background: "#DCFCE7",
+    color: "#15803D",
+  },
+
+  statusBlue: {
+    background: "#DBEAFE",
+    color: "#1D4ED8",
+  },
+
+  statusGray: {
+    background: "#F1F5F9",
+    color: "#64748B",
+  },
+
+  statusYellow: {
+    background: "#FEF3C7",
+    color: "#B45309",
   },
 
   checkoutButton: {
     border: "none",
-    background: "transparent",
+    background: "#EFF6FF",
+    color: "#2563EB",
+    padding: "6px 9px",
+    borderRadius: "5px",
     fontSize: "9px",
+    fontWeight: "600",
     cursor: "pointer",
-    color: "#777777",
+  },
+
+  completedText: {
+    color: "#94A3B8",
+    fontSize: "10px",
+  },
+
+  recordCount: {
+    background: "#F1F5F9",
+    color: "#64748B",
+    padding: "6px 10px",
+    borderRadius: "5px",
+    fontSize: "10px",
+    fontWeight: "600",
+  },
+
+  emptyState: {
+    padding: "40px",
+    textAlign: "center",
+    color: "#94A3B8",
+    fontSize: "13px",
   },
 
   formCard: {
-    background: "#ffffff",
-    border:
-      "1px solid #dedfe2",
-    borderRadius: "7px",
-    padding: "20px",
-    marginBottom: "18px",
-  },
-
-  formTitle: {
-    margin: "0 0 5px",
-    fontSize: "14px",
-    fontWeight: "700",
+    background: "#FFFFFF",
+    border: "1px solid #E2E8F0",
+    borderRadius: "10px",
+    padding: "25px",
   },
 
   formGrid: {
     display: "grid",
-    gridTemplateColumns:
-      "1fr 1fr",
-    gap: "15px",
-    marginTop: "20px",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "20px",
   },
 
-  input: {
-    width: "100%",
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+  },
+
+  formLabel: {
+    fontSize: "11px",
+    fontWeight: "600",
+    color: "#475569",
+  },
+
+  formInput: {
     height: "38px",
-    boxSizing: "border-box",
-    border:
-      "1px solid #d1d5db",
-    borderRadius: "5px",
+    border: "1px solid #CBD5E1",
+    borderRadius: "6px",
     padding: "0 11px",
     outline: "none",
-    fontSize: "10px",
-    background: "#ffffff",
+    fontSize: "12px",
+    color: "#1E293B",
+    boxSizing: "border-box",
   },
 
-  label: {
-    display: "block",
-    fontSize: "9px",
-    fontWeight: "600",
-    color: "#6b7280",
-    marginBottom: "6px",
-  },
-
-  reportControls: {
-    display: "grid",
-    gridTemplateColumns:
-      "1fr 1fr auto",
-    gap: "15px",
-    alignItems: "end",
-    marginTop: "20px",
-  },
-
-  controlGroup: {
-    minWidth: 0,
-  },
-
-  formButtons: {
+  formActions: {
+    marginTop: "25px",
     display: "flex",
-    justifyContent:
-      "flex-end",
-    gap: "10px",
-    marginTop: "20px",
-  },
-
-  cancelButton: {
-    border:
-      "1px solid #d1d5db",
-    background: "#ffffff",
-    borderRadius: "5px",
-    padding: "10px 15px",
-    fontSize: "10px",
-    cursor: "pointer",
+    justifyContent: "flex-end",
   },
 
   settingsGrid: {
     display: "grid",
-    gridTemplateColumns:
-      "1fr 1fr",
-    gap: "18px",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "20px",
+  },
+
+  settingsList: {
+    marginTop: "20px",
   },
 
   settingRow: {
+    padding: "16px 0",
+    borderTop: "1px solid #F1F5F9",
     display: "flex",
     alignItems: "center",
-    justifyContent:
-      "space-between",
-    padding:
-      "16px 0",
-    borderBottom:
-      "1px solid #eeeeee",
-    gap: "15px",
+    justifyContent: "space-between",
+    gap: "20px",
   },
 
   settingTitle: {
-    fontSize: "11px",
+    fontSize: "12px",
     fontWeight: "600",
-    color: "#222",
+    color: "#1E293B",
   },
 
   settingDescription: {
-    fontSize: "9px",
-    color: "#9ca3af",
     marginTop: "4px",
+    fontSize: "10px",
+    color: "#94A3B8",
+  },
+
+  settingValue: {
+    fontSize: "10px",
+    fontWeight: "600",
+    color: "#2563EB",
+    background: "#EFF6FF",
+    padding: "5px 9px",
+    borderRadius: "5px",
   },
 
   toggle: {
@@ -2739,56 +1594,30 @@ const styles = {
     height: "22px",
     border: "none",
     borderRadius: "20px",
-    position: "relative",
+    padding: "2px",
     cursor: "pointer",
-    flexShrink: 0,
+    position: "relative",
   },
 
   toggleOn: {
-    background: "#242424",
+    background: "#2563EB",
   },
 
   toggleOff: {
-    background: "#d1d5db",
+    background: "#CBD5E1",
   },
 
   toggleCircle: {
-    position: "absolute",
-    top: "3px",
-    width: "16px",
-    height: "16px",
-    background: "#ffffff",
+    width: "18px",
+    height: "18px",
     borderRadius: "50%",
+    background: "#FFFFFF",
+    display: "block",
+    transition: "0.2s",
   },
 
-  circleOn: {
-    right: "3px",
-  },
-
-  circleOff: {
-    left: "3px",
-  },
-
-  infoRow: {
-    display: "flex",
-    justifyContent:
-      "space-between",
-    padding: "12px 0",
-    borderBottom:
-      "1px solid #eeeeee",
-    fontSize: "10px",
-    color: "#6b7280",
-  },
-
-  successMessage: {
-    background: "#f0fdf4",
-    color: "#166534",
-    border:
-      "1px solid #bbf7d0",
-    borderRadius: "5px",
-    padding: "10px 14px",
-    fontSize: "10px",
-    marginBottom: "18px",
+  toggleCircleOn: {
+    marginLeft: "18px",
   },
 };
 
