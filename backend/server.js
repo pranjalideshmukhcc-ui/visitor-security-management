@@ -7,6 +7,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const visitorRoutes = require("./routes/visitorRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
 const logRoutes = require("./routes/logRoutes");
+const hostRoutes = require("./routes/hostRoutes");
 
 
 const app = express();
@@ -31,6 +32,10 @@ app.use("/api/approvals", approvalRoutes);
 
 //log routes
 app.use("/api/logs", logRoutes);
+
+//host routes
+//Host routes
+app.use("/api/hosts", hostRoutes);
 
 // Test route
 app.get("/", (req, res) => {
