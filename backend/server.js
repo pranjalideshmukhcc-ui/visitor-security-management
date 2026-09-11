@@ -3,12 +3,14 @@ const cors = require("cors");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
+
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const visitorRoutes = require("./routes/visitorRoutes");
 const approvalRoutes = require("./routes/approvalRoutes");
 const logRoutes = require("./routes/logRoutes");
 const hostRoutes = require("./routes/hostRoutes");
-
+const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -21,21 +23,26 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-//Dashboard routes
+// Dashboard routes
 app.use("/api/dashboard", dashboardRoutes);
 
-//Visitor routes
+// Visitor routes
 app.use("/api/visitors", visitorRoutes);
 
-//approval routes
+// Approval routes
 app.use("/api/approvals", approvalRoutes);
 
-//log routes
+// Log routes
 app.use("/api/logs", logRoutes);
 
-//host routes
-//Host routes
+// Host routes
 app.use("/api/hosts", hostRoutes);
+
+// User routes
+app.use("/api/users", userRoutes);
+
+// Authentication routes
+app.use("/api/auth", authRoutes);
 
 // Test route
 app.get("/", (req, res) => {

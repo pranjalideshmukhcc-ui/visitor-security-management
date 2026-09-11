@@ -24,10 +24,41 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all visitors
+// Get all visitors with optional search and filters
 router.get("/", async (req, res) => {
   try {
-    const visitors = await Visitor.find().sort({ createdAt: -1 });
+    const { search, status, date } = req.query;
+
+    const filter = {};
+
+    // Search by visitor name
+    if (search) {
+      filter.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    // Filter by status
+    if (status) {
+      filter.status = status;
+    }
+
+    // Filter by date
+    if (date) {
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+
+      filter.createdAt = {
+        $gte: startDate,
+        $lt: endDate,
+      };
+    }
+
+    const visitors = await Visitor.find(filter).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json({
       success: true,
@@ -172,6 +203,5 @@ router.post("/:id/check-out", async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;
