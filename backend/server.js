@@ -11,6 +11,7 @@ const logRoutes = require("./routes/logRoutes");
 const hostRoutes = require("./routes/hostRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const hostRoutes = require("./routes/hostRoutes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/users", userRoutes);
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+app.use("/api/hosts", hostRoutes);
 
 // Test route
 app.get("/", (req, res) => {
