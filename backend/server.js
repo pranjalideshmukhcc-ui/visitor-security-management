@@ -11,7 +11,6 @@ const logRoutes = require("./routes/logRoutes");
 const hostRoutes = require("./routes/hostRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
-const hostRoutes = require("./routes/hostRoutes");
 
 const app = express();
 
