@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 
+
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -7,22 +8,26 @@ function Sidebar() {
   const isActive = (path) => location.pathname === path;
 
   const navClass = (path) =>
-    `w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-left ${
-      isActive(path)
-        ? "bg-gray-100 text-gray-900 font-medium"
-        : "text-gray-600 hover:bg-gray-50"
-    }`;
+  `w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-left ${
+    isActive(path)
+      ? "bg-indigo-50 text-blue-700 font-semibold"
+      : "text-slate-600 hover:bg-indigo-50 hover:text-blue-700"
+  }`;
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-gray-200 flex-shrink-0">
-      <div className="h-16 px-6 flex items-center border-b border-gray-200">
-        <div className="w-7 h-7 bg-gray-900 rounded-md mr-3 flex items-center justify-center text-white text-xs">
-          S
-        </div>
+   <aside className="w-64 min-h-screen bg-white border-r border-indigo-100 flex-shrink-0">
+      <div className="h-16 px-6 flex items-center border-b border-indigo-100">
+       <div className="w-8 h-8 mr-3 flex items-center justify-center">
+ <img
+  src="/visitra-logo.jpg"
+  alt="VISITRA"
+  className="w-8 h-8 object-contain"
+/>
+</div>
 
-        <span className="font-bold text-sm tracking-wide">
-          SECURE-PASS
-        </span>
+<span className="font-bold text-sm tracking-wide text-[#172554]">
+  VISITRA
+</span>
       </div>
 
       <div className="px-4 py-6">

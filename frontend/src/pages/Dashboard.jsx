@@ -7,25 +7,25 @@ function Dashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+   <div className="min-h-screen bg-[#F8FAFC] flex">
       <Sidebar />
 
       <main className="flex-1 min-w-0">
         <div className="p-8">
           <div className="flex items-start justify-between mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+             <h1 className="text-2xl font-bold text-[#0F2A5F]">
                 Dashboard Overview
               </h1>
 
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 Real-time monitoring of campus visitors and security logs.
               </p>
             </div>
 
             <button
               onClick={() => navigate("/pre-registration")}
-              className="bg-gray-900 text-white px-5 py-3 rounded-md text-sm font-semibold hover:bg-gray-800"
+             className="bg-gradient-to-r from-[#2563EB] to-[#6366F1] text-white px-5 py-3 rounded-md text-sm font-semibold shadow-md shadow-blue-200 hover:from-[#1D4ED8] hover:to-[#4F46E5] transition-all"
             >
               + Register New Visitor
             </button>

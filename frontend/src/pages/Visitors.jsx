@@ -23,6 +23,7 @@ function Visitors() {
   const [selectedVisitor, setSelectedVisitor] = useState(null);
 
   const [visitors, setVisitors] = useState([]);
+  const [isAddingVisitor, setIsAddingVisitor] = useState(false);
 
   useEffect(() => {
   const fetchVisitors = async () => {
@@ -93,9 +94,10 @@ function Visitors() {
     });
   };
 
-  const handleAddVisitor = async (e) => {
+ const handleAddVisitor = async (e) => {
   e.preventDefault();
-
+  setIsAddingVisitor(true);
+  
   try {
     const response = await axios.post(
       "http://localhost:5000/api/visitors",
@@ -270,7 +272,7 @@ function Visitors() {
         return "bg-blue-50 text-blue-700";
 
       case "Checked In":
-        return "bg-green-50 text-green-700";
+        return "bg-cyan-50 text-cyan-700";
 
       case "Checked Out":
         return "bg-slate-100 text-slate-700";
@@ -284,7 +286,7 @@ function Visitors() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-[#F8FAFC] flex">
 
       {/* =====================================================
           SIDEBAR
@@ -337,7 +339,7 @@ function Visitors() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">
+            <h2 className="text-2xl font-bold text-[#0F2A5F]">
               Visitors
             </h2>
 
@@ -348,7 +350,7 @@ function Visitors() {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+           className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2563EB] to-[#6366F1] text-white rounded-lg hover:from-[#1D4ED8] hover:to-[#4F46E5] transition font-medium shadow-md shadow-blue-200"
           >
             <Plus size={18} />
             Add Visitor
@@ -376,7 +378,7 @@ function Visitors() {
               placeholder="Search by name, phone, purpose or host..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             className="w-full pl-10 pr-4 py-2.5 bg-white border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
 
           </div>
@@ -388,7 +390,7 @@ function Visitors() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none w-full sm:w-48 pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="appearance-none w-full sm:w-48 pl-10 pr-10 py-2.5 bg-white border border-blue-100 rounded-lg text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="All">All Status</option>
               <option value="Pending">Pending</option>
@@ -411,13 +413,13 @@ function Visitors() {
             TABLE
         ====================================================== */}
 
-        <div className="mt-6 bg-white rounded-xl border border-slate-200 overflow-hidden">
+       <div className="mt-6 bg-white rounded-xl border border-blue-100 overflow-hidden">
 
           <div className="overflow-x-auto">
 
             <table className="w-full min-w-[950px]">
 
-              <thead className="bg-slate-50 border-b border-slate-200">
+             <thead className="bg-[#EFF6FF] border-b border-blue-100">
 
                 <tr>
 
@@ -459,7 +461,7 @@ function Visitors() {
 
                   <tr
                     key={visitor.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition"
+                   className="border-b border-blue-50 hover:bg-[#F8FAFC] transition"
                   >
 
                     <td className="px-6 py-4">
@@ -476,15 +478,15 @@ function Visitors() {
 
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4text-[#0F2A5F]">
                       {visitor.purpose}
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4text-[#0F2A5F]">
                       {visitor.host}
                     </td>
 
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 text-[#0F2A5F]">
                       {visitor.checkIn}
                     </td>
 
@@ -535,7 +537,7 @@ function Visitors() {
 
                         {/* CHECK OUT */}
 
-                        {visitor.status === "Checked In" && (
+                       {(visitor.status === "Checked In" || visitor.status === "checked-in") && (
 
                           <button
                             onClick={() => handleCheckOut(visitor.id)}
@@ -596,11 +598,11 @@ function Visitors() {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
 
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-xl border border-blue-100 shadow-xl max-h-[90vh] overflow-y-auto">
 
             {/* MODAL HEADER */}
 
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+           <div className="flex items-center justify-between px-6 py-5 border-b border-blue-100">
 
               <div>
 
@@ -645,7 +647,7 @@ function Visitors() {
                   onChange={handleChange}
                   required
                   placeholder="Enter visitor name"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
               </div>
@@ -665,7 +667,7 @@ function Visitors() {
                   onChange={handleChange}
                   required
                   placeholder="Enter phone number"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
               </div>
@@ -684,7 +686,7 @@ function Visitors() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter email (optional)"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
               </div>
@@ -704,7 +706,7 @@ function Visitors() {
                   onChange={handleChange}
                   required
                   placeholder="e.g. Meeting, Interview, Delivery"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
               </div>
@@ -724,7 +726,7 @@ function Visitors() {
                   onChange={handleChange}
                   required
                   placeholder="Enter host name"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
               </div>
@@ -821,7 +823,7 @@ function Visitors() {
                   Visitor Name
                 </p>
 
-                <p className="font-medium text-slate-800">
+                <p className="font-medium text-[#0F2A5F]">
                   {selectedVisitor.name}
                 </p>
               </div>
@@ -969,7 +971,7 @@ function Visitors() {
 
                 {/* CHECK OUT */}
 
-                {selectedVisitor.status === "Checked In" && (
+               {(selectedVisitor.status === "Checked In" || selectedVisitor.status === "checked-in") && (
 
                   <button
                     onClick={() =>

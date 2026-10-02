@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
@@ -8,6 +9,8 @@ function Login() {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -24,6 +27,7 @@ function Login() {
     console.log("Login response:", response.data);
 
     setMessage("Login successful!");
+navigate("/dashboard");
   } catch (error) {
     console.error("Login error:", error);
 
@@ -40,39 +44,24 @@ function Login() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-indigo-100 px-8 py-9">
 
         {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <div className="relative w-20 h-20 flex items-center justify-center">
+<div className="flex justify-center mb-5">
+  <img
+    src="/visitra-logo.jpg"
+    alt="VISITRA"
+    className="w-20 h-20 object-contain"
+  />
+</div>
 
-            {/* Orbit */}
-            <div className="absolute w-20 h-9 border-4 border-blue-600 rounded-full rotate-[-25deg]" />
+{/* Brand */}
+<div className="text-center mb-8">
 
-            {/* Shield */}
-            <div className="relative w-14 h-16 bg-gradient-to-br from-[#172554] to-[#2563EB] flex items-center justify-center clip-shield shadow-lg">
-              <span className="text-white text-2xl font-bold">
-                S
-              </span>
+  <h1 className="text-3xl font-bold tracking-tight text-[#172554]">
+    VISITRA
+  </h1>
 
-              {/* Lock */}
-              <div className="absolute bottom-3 w-3 h-3 bg-white rounded-sm">
-                <div className="absolute -top-2 left-[2px] w-2 h-2 border-2 border-white rounded-t-full" />
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Brand */}
-        <div className="text-center mb-8">
-
-          <h1 className="text-3xl font-bold tracking-tight text-[#172554]">
-            Secure<span className="text-[#2563EB]">Gate</span>{" "}
-            <span className="text-[#172554]">VMS</span>
-          </h1>
-
-          <p className="text-sm text-slate-500 mt-2">
-            Visitor & Security Management System
-          </p>
-
+  <p className="text-sm text-slate-500 mt-2">
+    Smart Visitor & Security Management
+  </p>
           <div className="flex items-center justify-center gap-3 mt-4">
             <div className="h-px w-16 bg-indigo-100" />
 
