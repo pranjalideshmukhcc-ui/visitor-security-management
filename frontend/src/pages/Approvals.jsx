@@ -8,7 +8,7 @@ function Approvals() {
   const fetchApprovals = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/approvals"
+       `${import.meta.env.VITE_API_URL}/api/approvals`
       );
 
       const approvalRequests = response.data.data.map((visitor) => ({
@@ -33,7 +33,7 @@ function Approvals() {
     const endpoint = status === "Approved" ? "approve" : "reject";
 
     const response = await axios.put(
-      `http://localhost:5000/api/approvals/${id}/${endpoint}`
+      `${import.meta.env.VITE_API_URL}/api/approvals/${id}/${endpoint}`
     );
 
     const updatedVisitor = response.data.data;

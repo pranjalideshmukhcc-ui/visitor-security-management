@@ -6,7 +6,7 @@ function Hosts() {
   useEffect(() => {
   const fetchHosts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/hosts");
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/hosts`);
       setHosts(response.data);
     } catch (error) {
       console.error("Failed to fetch hosts:", error);
@@ -37,7 +37,7 @@ const [formData, setFormData] = useState({
 
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/hosts",
+     `${import.meta.env.VITE_API_URL}/api/hosts`,
       formData
     );
 

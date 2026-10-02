@@ -29,7 +29,7 @@ function Visitors() {
   const fetchVisitors = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/visitors"
+        `${import.meta.env.VITE_API_URL}/api/visitors`
       );
 
       setVisitors(
@@ -100,7 +100,7 @@ function Visitors() {
   
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/visitors",
+      `${import.meta.env.VITE_API_URL}/api/visitors`,
       {
         name: formData.name,
         email: formData.email,
@@ -191,7 +191,7 @@ function Visitors() {
   const handleCheckIn = async (id) => {
   try {
     const response = await axios.put(
-      `http://localhost:5000/api/visitors/${id}`,
+      `${import.meta.env.VITE_API_URL}/api/visitors/${id}`,
       {
         checkInTime: new Date(),
         status: "checked-in",
@@ -229,7 +229,7 @@ function Visitors() {
   const handleCheckOut = async (id) => {
   try {
     const response = await axios.put(
-      `http://localhost:5000/api/visitors/${id}`,
+      `${import.meta.env.VITE_API_URL}/api/visitors/${id}`,
       {
         checkOutTime: new Date(),
         status: "checked-out",
